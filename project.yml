@@ -1,0 +1,43 @@
+name: Vista
+options:
+  bundleIdPrefix: com.vista
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+  minimumXcodeGenVersion: "2.38.0"
+
+packages:
+  HotKey:
+    url: https://github.com/soffes/HotKey
+    from: "0.2.1"
+
+targets:
+  Vista:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vista.app
+        PRODUCT_NAME: Vista
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        SWIFT_VERSION: "5.9"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - package: HotKey
+    info:
+      path: Sources/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleName: Vista
+        CFBundleDisplayName: Vista
+        CFBundleIdentifier: com.vista.app
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "0.1.0"
+        CFBundlePackageType: APPL
+        CFBundleExecutable: Vista
+        NSHumanReadableCopyright: ""

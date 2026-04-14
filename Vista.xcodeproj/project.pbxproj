@@ -1,0 +1,461 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00DD8E573211EBC469CE3DC2 /* SidebarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0145CE19912167B792DF3D /* SidebarPanel.swift */; };
+		0BF23001878266FB32509F0D /* HotZoneManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6BA25F5972488735E6ABA2 /* HotZoneManager.swift */; };
+		20E65BFE93B77D47ECBD58CB /* HotKeysManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E92968F314D5498A862168 /* HotKeysManager.swift */; };
+		22F01CA80F93BF2940A376CA /* SidebarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCCCB5292E9893AF269B26E8 /* SidebarViewModel.swift */; };
+		3C277022329020C628E6E5CD /* YabaiModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F32BAC399EB316F8BDB7CD5 /* YabaiModels.swift */; };
+		53159C466953278DC43130B3 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 3CE5890DCC96F282DDBFE226 /* HotKey */; };
+		534D15115F3ADCEDA15AF812 /* WindowRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827FB279504D2C927F96620 /* WindowRow.swift */; };
+		585243382E9D052CEBC10FEB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE2F688649E810248701F1AD /* SidebarView.swift */; };
+		6549644813E0D8DF9A158886 /* DisplaySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A186E60E7D8B10C9F4A6EC /* DisplaySection.swift */; };
+		8B1A66BE41626BE78BE0E2DB /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A928F417D9FD49CA964B64 /* MenuBarManager.swift */; };
+		8CA4DBCC433EE58D3E7C4BB9 /* VistaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AE39D4536254D6FCDAE1F2 /* VistaApp.swift */; };
+		92B0CB491048651158401645 /* WindowThumbnailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */; };
+		9B1A603329566E510E7C54D1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6032D2A817C998D34E57E29 /* AppDelegate.swift */; };
+		CCCA106C00918443D38AD4DE /* SpaceRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E4EC045EA9E54C93D87F43 /* SpaceRow.swift */; };
+		D1BB3B59CA9BFC5CE3EBAE71 /* YabaiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6727D88BA81432FF9385C87D /* YabaiService.swift */; };
+		D66D9A4BD1455B7B1047DFC6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4442B6070950D247E88F9CD7 /* SettingsView.swift */; };
+		DB751D63F1B7E0549A574324 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D1597C29ACE97F0CA5D696 /* SettingsStore.swift */; };
+		DC0A7C19183E63682FC3BCBD /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		3532ABEFBB7E0FBC43A23BD0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		3F32BAC399EB316F8BDB7CD5 /* YabaiModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YabaiModels.swift; sourceTree = "<group>"; };
+		4442B6070950D247E88F9CD7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		6727D88BA81432FF9385C87D /* YabaiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YabaiService.swift; sourceTree = "<group>"; };
+		80E4EC045EA9E54C93D87F43 /* SpaceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceRow.swift; sourceTree = "<group>"; };
+		97E92968F314D5498A862168 /* HotKeysManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeysManager.swift; sourceTree = "<group>"; };
+		A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowThumbnailService.swift; sourceTree = "<group>"; };
+		AE2F688649E810248701F1AD /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		B256EBA3FEDC04DDB4DA7317 /* Vista.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vista.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6032D2A817C998D34E57E29 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		CE0145CE19912167B792DF3D /* SidebarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarPanel.swift; sourceTree = "<group>"; };
+		D2D1597C29ACE97F0CA5D696 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		DCCCB5292E9893AF269B26E8 /* SidebarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarViewModel.swift; sourceTree = "<group>"; };
+		E4A186E60E7D8B10C9F4A6EC /* DisplaySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplaySection.swift; sourceTree = "<group>"; };
+		E827FB279504D2C927F96620 /* WindowRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowRow.swift; sourceTree = "<group>"; };
+		EF6BA25F5972488735E6ABA2 /* HotZoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotZoneManager.swift; sourceTree = "<group>"; };
+		F0A928F417D9FD49CA964B64 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
+		F7AE39D4536254D6FCDAE1F2 /* VistaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VistaApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1BC7ECDF3DB23B19140CC87 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				53159C466953278DC43130B3 /* HotKey in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1750AC40C9E7B7165CF0872A /* HotZone */ = {
+			isa = PBXGroup;
+			children = (
+				EF6BA25F5972488735E6ABA2 /* HotZoneManager.swift */,
+			);
+			path = HotZone;
+			sourceTree = "<group>";
+		};
+		23EB8A69D7D8787D0E825C3A /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */,
+				3F32BAC399EB316F8BDB7CD5 /* YabaiModels.swift */,
+				6727D88BA81432FF9385C87D /* YabaiService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		369BDEB0D51254AC65FEF1E4 /* Sidebar */ = {
+			isa = PBXGroup;
+			children = (
+				E4A186E60E7D8B10C9F4A6EC /* DisplaySection.swift */,
+				CE0145CE19912167B792DF3D /* SidebarPanel.swift */,
+				AE2F688649E810248701F1AD /* SidebarView.swift */,
+				DCCCB5292E9893AF269B26E8 /* SidebarViewModel.swift */,
+				80E4EC045EA9E54C93D87F43 /* SpaceRow.swift */,
+				E827FB279504D2C927F96620 /* WindowRow.swift */,
+			);
+			path = Sidebar;
+			sourceTree = "<group>";
+		};
+		572E48287714F54416EEEFCF /* HotKeys */ = {
+			isa = PBXGroup;
+			children = (
+				97E92968F314D5498A862168 /* HotKeysManager.swift */,
+			);
+			path = HotKeys;
+			sourceTree = "<group>";
+		};
+		7FF96698F65A098B2F03335A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B256EBA3FEDC04DDB4DA7317 /* Vista.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8058BDE8709BC8EFD9306E4D /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				D2D1597C29ACE97F0CA5D696 /* SettingsStore.swift */,
+				4442B6070950D247E88F9CD7 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		82C4A28C6B3A82D58B791C18 = {
+			isa = PBXGroup;
+			children = (
+				F3F732C57AC885C07C31A940 /* Sources */,
+				7FF96698F65A098B2F03335A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9B6288A4D531AB6D64A1A308 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				F0A928F417D9FD49CA964B64 /* MenuBarManager.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		B584BC58F3EBD620262D8B73 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				572E48287714F54416EEEFCF /* HotKeys */,
+				1750AC40C9E7B7165CF0872A /* HotZone */,
+				9B6288A4D531AB6D64A1A308 /* MenuBar */,
+				8058BDE8709BC8EFD9306E4D /* Settings */,
+				369BDEB0D51254AC65FEF1E4 /* Sidebar */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		C913AC63D6A91279AF943C54 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */,
+				C6032D2A817C998D34E57E29 /* AppDelegate.swift */,
+				F7AE39D4536254D6FCDAE1F2 /* VistaApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		F3F732C57AC885C07C31A940 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				3532ABEFBB7E0FBC43A23BD0 /* Info.plist */,
+				C913AC63D6A91279AF943C54 /* App */,
+				B584BC58F3EBD620262D8B73 /* Features */,
+				23EB8A69D7D8787D0E825C3A /* Services */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D90381EEC73096A8C28FEA0 /* Vista */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CA5462A3F70F1EAB712AE9DF /* Build configuration list for PBXNativeTarget "Vista" */;
+			buildPhases = (
+				E83032CB4DEFBA53FD7C0329 /* Sources */,
+				A1BC7ECDF3DB23B19140CC87 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Vista;
+			packageProductDependencies = (
+				3CE5890DCC96F282DDBFE226 /* HotKey */,
+			);
+			productName = Vista;
+			productReference = B256EBA3FEDC04DDB4DA7317 /* Vista.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		394820EBCE15FF5654303FC2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					8D90381EEC73096A8C28FEA0 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 4DE7B4FE7E2410B1A3F05254 /* Build configuration list for PBXProject "Vista" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 82C4A28C6B3A82D58B791C18;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A2634E6F44FE8F5FC7E52A00 /* XCRemoteSwiftPackageReference "HotKey" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7FF96698F65A098B2F03335A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8D90381EEC73096A8C28FEA0 /* Vista */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E83032CB4DEFBA53FD7C0329 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DC0A7C19183E63682FC3BCBD /* AppConstants.swift in Sources */,
+				9B1A603329566E510E7C54D1 /* AppDelegate.swift in Sources */,
+				6549644813E0D8DF9A158886 /* DisplaySection.swift in Sources */,
+				20E65BFE93B77D47ECBD58CB /* HotKeysManager.swift in Sources */,
+				0BF23001878266FB32509F0D /* HotZoneManager.swift in Sources */,
+				8B1A66BE41626BE78BE0E2DB /* MenuBarManager.swift in Sources */,
+				DB751D63F1B7E0549A574324 /* SettingsStore.swift in Sources */,
+				D66D9A4BD1455B7B1047DFC6 /* SettingsView.swift in Sources */,
+				00DD8E573211EBC469CE3DC2 /* SidebarPanel.swift in Sources */,
+				585243382E9D052CEBC10FEB /* SidebarView.swift in Sources */,
+				22F01CA80F93BF2940A376CA /* SidebarViewModel.swift in Sources */,
+				CCCA106C00918443D38AD4DE /* SpaceRow.swift in Sources */,
+				8CA4DBCC433EE58D3E7C4BB9 /* VistaApp.swift in Sources */,
+				534D15115F3ADCEDA15AF812 /* WindowRow.swift in Sources */,
+				92B0CB491048651158401645 /* WindowThumbnailService.swift in Sources */,
+				3C277022329020C628E6E5CD /* YabaiModels.swift in Sources */,
+				D1BB3B59CA9BFC5CE3EBAE71 /* YabaiService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0FBCF6C1A08A31CBA43BD44E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4F4987D150A840F2BF0B683F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Sources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vista.app;
+				PRODUCT_NAME = Vista;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		5280938A1308FCC9FF4C13B5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		8522C8FDDEB907DD45D2B4C6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Sources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vista.app;
+				PRODUCT_NAME = Vista;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4DE7B4FE7E2410B1A3F05254 /* Build configuration list for PBXProject "Vista" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FBCF6C1A08A31CBA43BD44E /* Debug */,
+				5280938A1308FCC9FF4C13B5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CA5462A3F70F1EAB712AE9DF /* Build configuration list for PBXNativeTarget "Vista" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8522C8FDDEB907DD45D2B4C6 /* Debug */,
+				4F4987D150A840F2BF0B683F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A2634E6F44FE8F5FC7E52A00 /* XCRemoteSwiftPackageReference "HotKey" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/soffes/HotKey";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.2.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3CE5890DCC96F282DDBFE226 /* HotKey */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A2634E6F44FE8F5FC7E52A00 /* XCRemoteSwiftPackageReference "HotKey" */;
+			productName = HotKey;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 394820EBCE15FF5654303FC2 /* Project object */;
+}
