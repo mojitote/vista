@@ -148,6 +148,14 @@ class SidebarPanel: NSPanel {
             NSEvent.removeMonitor(monitor)
             clickMonitor = nil
         }
+        if let monitor = localMouseMonitor {
+            NSEvent.removeMonitor(monitor)
+            localMouseMonitor = nil
+        }
+        if let monitor = localClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            localClickMonitor = nil
+        }
     }
     
     private func handleMouseMoved(_ event: NSEvent) {
