@@ -12,6 +12,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsStore: SettingsStore!
     private var sceneStore: SceneStore!
     private var spaceNameStore: SpaceNameStore!
+    private var trackpadManager: TrackpadTriggerManager!
     private var settingsWindow: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -51,6 +52,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         hotZoneManager.start()
         
+        // Initialize Trackpad Trigger
+        trackpadManager = TrackpadTriggerManager()
+        trackpadManager.isEnabled = settingsStore.triggerMode == .threeFingerTap
+        trackpadManager.onTrigger = { [weak self] mouseLocation, screen in
+            self?.showSidebarAtPosition(on: screen, mousePosition: mouseLocation)
+        }
+        trackpadManager.start()
+        
+        // 根据 trigger mode 启用/禁用对应管理器
+        applyTriggerMode()
+        
         // Initialize Hot Keys
         hotKeysManager = HotKeysManager()
         hotKeysManager.onToggleSidebar = { [weak self] in
@@ -86,6 +98,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         sidebarViewModel.startPolling()
     }
     
+    private func showSidebarAtPosition(on screen: NSScreen, mousePosition: NSPoint) {
+        guard !sidebarPanel.isVisible else {
+            // 三指点击时如果已经显示则关闭
+            dismissSidebar()
+            return
+        }
+        
+        // 在鼠标位置显示侧边栏
+        let width = settingsStore.sidebarWidth
+        let height = screen.visibleFrame.height
+        let x = max(screen.frame.minX, min(mousePosition.x - width / 2, screen.frame.maxX - width))
+        let y = screen.visibleFrame.minY
+        
+        sidebarPanel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
+        sidebarPanel.alphaValue = 0
+        sidebarPanel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            sidebarPanel.animator().alphaValue = 1
+        }
+        sidebarPanel.updateSidebarColor(color: settingsStore.sidebarNSColor, opacity: settingsStore.sidebarOpacity)
+        sidebarViewModel.loadData(withThumbnails: settingsStore.showThumbnails)
+        sidebarViewModel.startPolling()
+    }
+    
+    private func applyTriggerMode() {
+        switch settingsStore.triggerMode {
+        case .hotZoneAndHotKey:
+            hotZoneManager.isEnabled = settingsStore.hotZoneEnabled
+            trackpadManager.isEnabled = false
+        case .threeFingerTap:
+            hotZoneManager.isEnabled = false
+            trackpadManager.isEnabled = true
+        }
+    }
+    
     private func dismissSidebar() {
         sidebarPanel.dismiss()
     }
@@ -103,7 +151,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Settings
     
     private func openSettings() {
-        if let window = settingsWindow, window.isVisible {
+        // 复用已有窗口
+        if let window = settingsWindow {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
@@ -111,7 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         let settingsView = SettingsView(store: settingsStore)
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 450),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 550),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -119,6 +168,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.title = "Vista Settings"
         window.contentView = NSHostingView(rootView: settingsView)
         window.center()
+        window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow = window

@@ -7,6 +7,11 @@ enum FullscreenDropAction: String {
     case exitAndMove = "exitAndMove"
 }
 
+enum SidebarTriggerMode: String {
+    case hotZoneAndHotKey = "hotZoneAndHotKey"
+    case threeFingerTap = "threeFingerTap"
+}
+
 class SettingsStore: ObservableObject {
     
     static let shared = SettingsStore()
@@ -19,6 +24,7 @@ class SettingsStore: ObservableObject {
     @Published var showThumbnails: Bool = true
     @Published var launchAtLogin: Bool = false
     @Published var fullscreenDropAction: FullscreenDropAction = .toast
+    @Published var triggerMode: SidebarTriggerMode = .hotZoneAndHotKey
     
     // Sidebar appearance
     @Published var sidebarColorHex: String?  // nil = 系统默认毛玻璃
@@ -49,6 +55,7 @@ class SettingsStore: ObservableObject {
             "showThumbnails": showThumbnails,
             "launchAtLogin": launchAtLogin,
             "fullscreenDropAction": fullscreenDropAction.rawValue,
+            "triggerMode": triggerMode.rawValue,
             "sidebarOpacity": sidebarOpacity,
         ]
         if let hex = sidebarColorHex {
@@ -87,6 +94,8 @@ class SettingsStore: ObservableObject {
         if let val = settings["sidebarHotKeyModifiers"] as? UInt32 { sidebarHotKeyModifiers = val }
         if let val = settings["fullscreenDropAction"] as? String,
            let action = FullscreenDropAction(rawValue: val) { fullscreenDropAction = action }
+        if let val = settings["triggerMode"] as? String,
+           let mode = SidebarTriggerMode(rawValue: val) { triggerMode = mode }
         if let val = settings["sidebarColorHex"] as? String { sidebarColorHex = val }
         if let val = settings["sidebarOpacity"] as? Double { sidebarOpacity = val }
     }

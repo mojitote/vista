@@ -17,6 +17,7 @@
 		4A8A4099367540B642AE4889 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9492B78B04D1763BDCC4A0 /* Scene.swift */; };
 		53159C466953278DC43130B3 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 3CE5890DCC96F282DDBFE226 /* HotKey */; };
 		534D15115F3ADCEDA15AF812 /* WindowRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827FB279504D2C927F96620 /* WindowRow.swift */; };
+		53F68A47B00FB277A59665BC /* TrackpadTriggerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F132BD22B436B1492416ED9 /* TrackpadTriggerManager.swift */; };
 		585243382E9D052CEBC10FEB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE2F688649E810248701F1AD /* SidebarView.swift */; };
 		6549644813E0D8DF9A158886 /* DisplaySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A186E60E7D8B10C9F4A6EC /* DisplaySection.swift */; };
 		8B1A66BE41626BE78BE0E2DB /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A928F417D9FD49CA964B64 /* MenuBarManager.swift */; };
@@ -45,6 +46,7 @@
 		7F0AC52EBB20FEEC4B37E7F4 /* SceneRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneRow.swift; sourceTree = "<group>"; };
 		80E4EC045EA9E54C93D87F43 /* SpaceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceRow.swift; sourceTree = "<group>"; };
 		97E92968F314D5498A862168 /* HotKeysManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeysManager.swift; sourceTree = "<group>"; };
+		9F132BD22B436B1492416ED9 /* TrackpadTriggerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackpadTriggerManager.swift; sourceTree = "<group>"; };
 		A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowThumbnailService.swift; sourceTree = "<group>"; };
 		AE2F688649E810248701F1AD /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		B256EBA3FEDC04DDB4DA7317 /* Vista.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vista.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -85,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				EF6BA25F5972488735E6ABA2 /* HotZoneManager.swift */,
+				9F132BD22B436B1492416ED9 /* TrackpadTriggerManager.swift */,
 			);
 			path = HotZone;
 			sourceTree = "<group>";
@@ -282,6 +285,7 @@
 				22F01CA80F93BF2940A376CA /* SidebarViewModel.swift in Sources */,
 				959A2A504C81318167FDFD0F /* SpaceNameStore.swift in Sources */,
 				CCCA106C00918443D38AD4DE /* SpaceRow.swift in Sources */,
+				53F68A47B00FB277A59665BC /* TrackpadTriggerManager.swift in Sources */,
 				8CA4DBCC433EE58D3E7C4BB9 /* VistaApp.swift in Sources */,
 				534D15115F3ADCEDA15AF812 /* WindowRow.swift in Sources */,
 				92B0CB491048651158401645 /* WindowThumbnailService.swift in Sources */,

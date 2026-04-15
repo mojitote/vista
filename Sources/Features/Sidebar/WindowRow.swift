@@ -8,6 +8,7 @@ struct WindowRow: View {
     @State private var isHovered = false
     @State private var isRenaming = false
     @State private var renameText = ""
+    @State private var showPreview = false
     
     private var displayApp: String {
         viewModel.windowNames[window.id] ?? window.app
@@ -55,13 +56,14 @@ struct WindowRow: View {
                 }
             }
             
-            // Thumbnail
-            if let thumbnail = window.thumbnail {
-                Image(nsImage: thumbnail)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: CGFloat(AppConstants.largeThumbnailWidth), maxHeight: CGFloat(AppConstants.largeThumbnailHeight))
-                    .cornerRadius(4)
+            // 预览按钮（hover 时显示）
+            if window.thumbnail != nil && isHovered {
+                Button(action: { showPreview.toggle() }) {
+                    Image(systemName: "eye")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 12)
@@ -73,6 +75,18 @@ struct WindowRow: View {
         .contentShape(Rectangle())
         .onHover { hovering in
             isHovered = hovering
+            if !hovering {
+                // 鼠标离开时不关闭预览，让用户手动关闭或点击其他地方关闭
+            }
+        }
+        .popover(isPresented: $showPreview, arrowEdge: .trailing) {
+            if let thumbnail = window.thumbnail {
+                Image(nsImage: thumbnail)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 320, maxHeight: 200)
+                    .padding(4)
+            }
         }
         .onTapGesture {
             viewModel.focusWindow(id: window.id, spaceIndex: spaceIndex)
@@ -147,11 +161,11 @@ private struct CloseButton: View {
         Button(action: action) {
             Image(systemName: "xmark")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundColor(isHovered ? .white : .secondary)
+                .foregroundColor(.secondary)
                 .frame(width: 16, height: 16)
                 .background(
                     Circle()
-                        .fill(isHovered ? Color.red : Color.primary.opacity(0.1))
+                        .fill(isHovered ? Color.primary.opacity(0.15) : Color.clear)
                 )
         }
         .buttonStyle(.plain)

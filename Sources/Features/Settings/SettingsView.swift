@@ -33,8 +33,17 @@ struct SettingsView: View {
                 Toggle("Show Thumbnails", isOn: $store.showThumbnails)
             }
             
+            Section("Trigger Mode") {
+                Picker("Sidebar Trigger", selection: $store.triggerMode) {
+                    Text("Hot Zone + Shortcut").tag(SidebarTriggerMode.hotZoneAndHotKey)
+                    Text("Three-Finger Tap (at cursor)").tag(SidebarTriggerMode.threeFingerTap)
+                }
+                .pickerStyle(.radioGroup)
+            }
+            
             Section("Hot Zone") {
                 Toggle("Enable Hot Zone", isOn: $store.hotZoneEnabled)
+                    .disabled(store.triggerMode != .hotZoneAndHotKey)
                 
                 HStack {
                     Text("Trigger Delay")
@@ -86,7 +95,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 400, height: 450)
+        .frame(width: 400, height: 550)
         .onReceive(store.objectWillChange.debounce(for: .milliseconds(500), scheduler: RunLoop.main)) { _ in
             store.save()
         }
