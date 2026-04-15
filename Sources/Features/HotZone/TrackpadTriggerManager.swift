@@ -34,8 +34,12 @@ class TrackpadTriggerManager {
     private var isStarted = false
     
     private var lastTriggerTime: Date = .distantPast
+    private var lastSecondaryDownTime: Date?
+    private var lastSecondaryDownLocation: NSPoint?
     // 触发后冷却时间
     private let cooldown: TimeInterval = 0.6
+    private let fallbackDoubleClickInterval: TimeInterval = 0.35
+    private let fallbackMaxDistance: CGFloat = 24
     
     func start() {
         guard !isStarted else { return }
@@ -69,6 +73,8 @@ class TrackpadTriggerManager {
             mouseMonitor = nil
         }
         isStarted = false
+        lastSecondaryDownTime = nil
+        lastSecondaryDownLocation = nil
         // #region debug-point A:trackpad-stop
         trackpadDebugReport(
             hypothesisId: "A",
@@ -105,8 +111,51 @@ class TrackpadTriggerManager {
                 data: ["clickCount": event.clickCount]
             )
             // #endregion
+            lastSecondaryDownTime = nil
+            lastSecondaryDownLocation = nil
             triggerIfReady()
+            return
         }
+        
+        let eventLocation = NSEvent.mouseLocation
+        if let lastTime = lastSecondaryDownTime,
+           let lastLocation = lastSecondaryDownLocation {
+            let interval = event.timestamp - lastTime.timeIntervalSinceReferenceDate
+            let distance = hypot(eventLocation.x - lastLocation.x, eventLocation.y - lastLocation.y)
+            
+            // #region debug-point D:fallback-check
+            trackpadDebugReport(
+                hypothesisId: "D",
+                location: "TrackpadTriggerManager.handleRightMouseEvent",
+                msg: "checking fallback double secondary click",
+                data: [
+                    "interval": interval,
+                    "distance": distance
+                ]
+            )
+            // #endregion
+            
+            if interval <= fallbackDoubleClickInterval && distance <= fallbackMaxDistance {
+                // #region debug-point D:fallback-detected
+                trackpadDebugReport(
+                    hypothesisId: "D",
+                    location: "TrackpadTriggerManager.handleRightMouseEvent",
+                    msg: "fallback double secondary click detected",
+                    data: [
+                        "interval": interval,
+                        "distance": distance
+                    ]
+                )
+                // #endregion
+                lastSecondaryDownTime = nil
+                lastSecondaryDownLocation = nil
+                triggerIfReady()
+                return
+            }
+        }
+        
+        lastSecondaryDownTime = Date(timeIntervalSinceReferenceDate: event.timestamp)
+        lastSecondaryDownLocation = eventLocation
     }
     
     private func triggerIfReady() {
