@@ -5,11 +5,19 @@ struct SpaceRow: View {
     @ObservedObject var viewModel: SidebarViewModel
     @ObservedObject var spaceNameStore: SpaceNameStore
     @ObservedObject var settingsStore: SettingsStore
+    @ObservedObject var sceneStore: SceneStore
     var onDismiss: (() -> Void)?
     @State private var isHovered = false
     @State private var isDropTargeted = false
     @State private var isRenaming = false
     @State private var renameText = ""
+    
+    /// 该 Space 归属的 Scene 主题颜色
+    private var sceneColor: Color? {
+        guard let scene = sceneStore.scene(forSpaceIndex: space.index) else { return nil }
+        guard let nsColor = NSColor(hex: scene.colorHex) else { return nil }
+        return Color(nsColor: nsColor)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -18,7 +26,7 @@ struct SpaceRow: View {
                 // Active indicator
                 if space.hasFocus {
                     RoundedRectangle(cornerRadius: 1.5)
-                        .fill(DesignTokens.Colors.activeIndicator)
+                        .fill(sceneColor ?? DesignTokens.Colors.activeIndicator)
                         .frame(width: AppConstants.activeIndicatorWidth, height: 16)
                 } else {
                     Color.clear
@@ -32,7 +40,7 @@ struct SpaceRow: View {
                 
                 Text(spaceNameStore.name(forSpaceIndex: space.index) ?? space.displayName)
                     .font(.system(size: 12, weight: space.hasFocus ? .semibold : .medium))
-                    .foregroundColor(space.hasFocus ? DesignTokens.Colors.primaryText : DesignTokens.Colors.secondaryText)
+                    .foregroundColor(sceneColor ?? (space.hasFocus ? DesignTokens.Colors.primaryText : DesignTokens.Colors.secondaryText))
                 
                 if space.isVisible {
                     Circle()
@@ -57,7 +65,9 @@ struct SpaceRow: View {
             .padding(.vertical, DesignTokens.Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
-                    .fill(isDropTargeted ? DesignTokens.Colors.dropTargetBackground : (isHovered ? DesignTokens.Colors.hoverBackground : Color.clear))
+                    .fill(isDropTargeted ? DesignTokens.Colors.dropTargetBackground :
+                          isHovered ? DesignTokens.Colors.hoverBackground :
+                          sceneColor?.opacity(0.08) ?? Color.clear)
             )
             .contentShape(Rectangle())
             .onHover { hovering in
@@ -125,6 +135,7 @@ struct SpaceRow: View {
                         spaceIndex: space.index,
                         viewModel: viewModel,
                         settingsStore: settingsStore,
+                        sceneStore: sceneStore,
                         onDismiss: onDismiss
                     )
                 }

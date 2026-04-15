@@ -24,6 +24,11 @@ class SceneStore: ObservableObject {
         return scene.spaceIndices.isEmpty ? nil : Set(scene.spaceIndices)
     }
     
+    /// 根据 Space index 查找归属的 Scene
+    func scene(forSpaceIndex index: Int) -> VistaScene? {
+        scenes.first(where: { $0.spaceIndices.contains(index) })
+    }
+    
     init() {
         load()
     }

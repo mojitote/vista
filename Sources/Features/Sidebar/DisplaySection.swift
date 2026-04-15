@@ -5,6 +5,7 @@ struct DisplaySection: View {
     @ObservedObject var viewModel: SidebarViewModel
     @ObservedObject var spaceNameStore: SpaceNameStore
     @ObservedObject var settingsStore: SettingsStore
+    @ObservedObject var sceneStore: SceneStore
     var onDismiss: (() -> Void)?
     
     var body: some View {
@@ -30,6 +31,7 @@ struct DisplaySection: View {
                     viewModel: viewModel,
                     spaceNameStore: spaceNameStore,
                     settingsStore: settingsStore,
+                    sceneStore: sceneStore,
                     onDismiss: onDismiss
                 )
             }

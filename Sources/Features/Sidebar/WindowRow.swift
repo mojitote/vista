@@ -5,6 +5,7 @@ struct WindowRow: View {
     let spaceIndex: Int
     @ObservedObject var viewModel: SidebarViewModel
     @ObservedObject var settingsStore: SettingsStore
+    @ObservedObject var sceneStore: SceneStore
     var onDismiss: (() -> Void)?
     @State private var isHovered = false
     @State private var isRenaming = false
@@ -13,6 +14,12 @@ struct WindowRow: View {
     
     private var displayApp: String {
         viewModel.windowNames[window.id] ?? window.app
+    }
+    
+    private var sceneColor: Color? {
+        guard let scene = sceneStore.scene(forSpaceIndex: spaceIndex) else { return nil }
+        guard let nsColor = NSColor(hex: scene.colorHex) else { return nil }
+        return Color(nsColor: nsColor)
     }
     
     var body: some View {
@@ -71,7 +78,8 @@ struct WindowRow: View {
         .padding(.vertical, DesignTokens.Spacing.xs)
         .background(
             RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
-                .fill(isHovered ? DesignTokens.Colors.hoverBackground : Color.clear)
+                .fill(isHovered ? DesignTokens.Colors.hoverBackground :
+                      sceneColor?.opacity(0.08) ?? Color.clear)
         )
         .contentShape(Rectangle())
         .onHover { hovering in

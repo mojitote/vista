@@ -19,15 +19,20 @@ struct SidebarView: View {
     var onDismiss: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     
+    /// 激活 Scene 的主题色（低透明度），用于整个面板背景
+    private var panelBackgroundColor: Color {
+        guard let scene = sceneStore.activeScene,
+              let nsColor = NSColor(hex: scene.colorHex) else {
+            return Color.clear
+        }
+        return Color(nsColor: nsColor).opacity(0.05)
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
-            titleBar
-            Rectangle()
-                .fill(DesignTokens.Colors.separator)
-                .frame(height: 1)
-            
             contentBody
         }
+        .background(panelBackgroundColor)
         .frame(
             maxWidth: .infinity,
             maxHeight: presentationStore.mode == .fullHeight ? .infinity : nil,
@@ -52,23 +57,6 @@ struct SidebarView: View {
         }
     }
 
-    private var titleBar: some View {
-        HStack {
-            Text(AppConstants.appName)
-                .font(.system(size: DesignTokens.Font.titleSize, weight: DesignTokens.Font.titleWeight))
-                .foregroundColor(DesignTokens.Colors.primaryText)
-            Spacer()
-            Button(action: { onOpenSettings?() }) {
-                Image(systemName: "gear")
-                    .font(.system(size: 13))
-                    .foregroundColor(DesignTokens.Colors.secondaryText)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, DesignTokens.Spacing.xl)
-        .padding(.vertical, DesignTokens.Spacing.lg)
-    }
-    
     @ViewBuilder
     private var contentBody: some View {
         if !viewModel.isYabaiRunning {
@@ -99,6 +87,7 @@ struct SidebarView: View {
                                     viewModel: viewModel,
                                     spaceNameStore: spaceNameStore,
                                     settingsStore: settingsStore,
+                                    sceneStore: sceneStore,
                                     onDismiss: onDismiss
                                 )
                             }
@@ -106,26 +95,29 @@ struct SidebarView: View {
                         .padding(.vertical, DesignTokens.Spacing.md)
                     }
                     
-                    SceneBar(sceneStore: sceneStore)
+                    SceneBar(sceneStore: sceneStore, onOpenSettings: onOpenSettings)
                 }
             case .popup:
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.filteredDisplayGroups) { group in
-                            DisplaySection(
-                                group: group,
-                                viewModel: viewModel,
-                                spaceNameStore: spaceNameStore,
-                                settingsStore: settingsStore,
-                                onDismiss: onDismiss
-                            )
+                VStack(spacing: 0) {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(viewModel.filteredDisplayGroups) { group in
+                                DisplaySection(
+                                    group: group,
+                                    viewModel: viewModel,
+                                    spaceNameStore: spaceNameStore,
+                                    settingsStore: settingsStore,
+                                    sceneStore: sceneStore,
+                                    onDismiss: onDismiss
+                                )
+                            }
                         }
-                        
-                        SceneBar(sceneStore: sceneStore)
+                        .padding(.vertical, DesignTokens.Spacing.md)
                     }
-                    .padding(.vertical, DesignTokens.Spacing.md)
+                    .frame(maxHeight: presentationStore.popupContentMaxHeight)
+                    
+                    SceneBar(sceneStore: sceneStore, onOpenSettings: onOpenSettings)
                 }
-                .frame(maxHeight: presentationStore.popupContentMaxHeight)
             }
         }
     }
