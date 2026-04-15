@@ -78,6 +78,43 @@ sudo yabai --load-sa
 yabai --start-service
 ```
 
+### 4.1 第二次及以后启动
+
+首次安装完成后，后续每次登录系统通常只需要重新启动 `yabai` 主进程，并重新加载 scripting addition：
+
+```bash
+yabai --start-service
+sudo yabai --load-sa
+```
+
+如果你已经在 `~/.config/yabai/yabairc` 里配置了下面这行：
+
+```bash
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+```
+
+那么 Dock 重启后会自动重新注入；但在 macOS Sequoia + `yabai v7.1.16` 这类环境里，**登录后手动执行一次 `sudo yabai --load-sa` 仍然是最稳妥的做法**。
+
+推荐把上面两行保存成你自己的启动脚本，例如：
+
+```bash
+#!/bin/zsh
+set -e
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+yabai --start-service
+sleep 1
+sudo yabai --load-sa
+```
+
+执行方式：
+
+```bash
+chmod +x ~/bin/start-yabai.sh
+~/bin/start-yabai.sh
+```
+
 ### 5. macOS 系统设置
 
 在 **系统设置 → 桌面与程序坞 → 调度中心** 中：
@@ -144,7 +181,7 @@ open Vista.xcodeproj
 # 然后按 Cmd+R 运行
 ```
 
-编译产物 `Vista.app` 位于 Xcode 的 DerivedData 目录下，可以拷贝到 `/Applications/` 或任意位置使用。
+编译产物 `Vista.app` 位于 Xcode 的 DerivedData 目录下。开发调试时建议直接从 DerivedData 运行，不要额外拷贝到 `/Applications/`。
 
 ## 已知问题与排错
 
@@ -185,21 +222,21 @@ sudo yabai --load-sa
 ```bash
 curl -L https://github.com/koekeishiya/yabai/releases/download/v7.1.15/yabai-v7.1.15.tar.gz -o /tmp/yabai.tar.gz
 mkdir -p /tmp/yabai-old && tar xzf /tmp/yabai.tar.gz -C /tmp/yabai-old
-sudo cp /tmp/yabai-old/archive/bin/yabai /usr/local/bin/yabai
-sudo chmod +x /usr/local/bin/yabai
+sudo cp /tmp/yabai-old/archive/bin/yabai /opt/homebrew/bin/yabai
+sudo chmod +x /opt/homebrew/bin/yabai
 ```
 
 降级后需重新配置 sudoers（binary hash 变了）：
 
 ```bash
-echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 /usr/local/bin/yabai | cut -d " " -f 1) /usr/local/bin/yabai --load-sa" | sudo tee /private/etc/sudoers.d/yabai
+echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 /opt/homebrew/bin/yabai | cut -d " " -f 1) /opt/homebrew/bin/yabai --load-sa" | sudo tee /private/etc/sudoers.d/yabai
 ```
 
 ### yabai 命令卡住无响应
 
 Homebrew 安装的 yabai v7.1.18 在 Sequoia 上可能出现任何命令（包括 `yabai --version`）卡住的问题。
 
-**解决方案**：使用官方预编译的 v7.1.16 或 v7.1.15 二进制替代（参见上方降级方案）。安装到 `/usr/local/bin/yabai` 后，需在 **系统设置 → 隐私与安全性 → 辅助功能** 中重新授权该路径。
+**解决方案**：使用官方预编译的 v7.1.16 或 v7.1.15 二进制替代（参见上方降级方案）。覆盖当前正在使用的 `/opt/homebrew/bin/yabai` 后，需在 **系统设置 → 隐私与安全性 → 辅助功能** 中重新授权该路径。
 
 ### Vista 点击窗口无法跳转
 
