@@ -1,8 +1,9 @@
 import Cocoa
 import SwiftUI
 import HotKey
+import Combine
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     private var sidebarPanel: SidebarPanel!
     private var sidebarViewModel: SidebarViewModel!
@@ -14,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var spaceNameStore: SpaceNameStore!
     private var trackpadManager: TrackpadTriggerManager!
     private var settingsWindow: NSWindow?
+    private var cancellables = Set<AnyCancellable>()
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         settingsStore = SettingsStore.shared
@@ -52,16 +54,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         hotZoneManager.start()
         
-        // Initialize Trackpad Trigger
+        // Initialize Trackpad Trigger (不在启动时 start，只在切换到三指模式时才 start)
         trackpadManager = TrackpadTriggerManager()
-        trackpadManager.isEnabled = settingsStore.triggerMode == .threeFingerTap
         trackpadManager.onTrigger = { [weak self] mouseLocation, screen in
             self?.showSidebarAtPosition(on: screen, mousePosition: mouseLocation)
         }
-        trackpadManager.start()
         
-        // 根据 trigger mode 启用/禁用对应管理器
-        applyTriggerMode()
+        // 如果保存的模式是三指，启动时尝试启用
+        if settingsStore.triggerMode == .threeFingerTap {
+            trackpadManager.isEnabled = true
+            trackpadManager.start()
+        }
         
         // Initialize Hot Keys
         hotKeysManager = HotKeysManager()
@@ -81,6 +84,38 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.openSettings()
         }
         menuBarManager.setup()
+        
+        // 监听设置变化，实时应用
+        settingsStore.$triggerMode
+            .dropFirst()
+            .sink { [weak self] _ in
+                self?.applyTriggerMode()
+            }
+            .store(in: &cancellables)
+        
+        settingsStore.$hotZoneEnabled
+            .dropFirst()
+            .sink { [weak self] enabled in
+                guard let self = self else { return }
+                if self.settingsStore.triggerMode == .hotZoneAndHotKey {
+                    self.hotZoneManager.isEnabled = enabled
+                }
+            }
+            .store(in: &cancellables)
+        
+        settingsStore.$hotZoneWidth
+            .dropFirst()
+            .sink { [weak self] width in
+                self?.hotZoneManager.hotZoneWidth = width
+            }
+            .store(in: &cancellables)
+        
+        settingsStore.$hotZoneDelay
+            .dropFirst()
+            .sink { [weak self] delay in
+                self?.hotZoneManager.delay = delay
+            }
+            .store(in: &cancellables)
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -126,11 +161,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func applyTriggerMode() {
         switch settingsStore.triggerMode {
         case .hotZoneAndHotKey:
-            hotZoneManager.isEnabled = settingsStore.hotZoneEnabled
             trackpadManager.isEnabled = false
+            trackpadManager.stop()
+            hotZoneManager.isEnabled = settingsStore.hotZoneEnabled
         case .threeFingerTap:
             hotZoneManager.isEnabled = false
             trackpadManager.isEnabled = true
+            trackpadManager.start()
         }
     }
     
@@ -151,7 +188,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Settings
     
     private func openSettings() {
-        // 复用已有窗口
         if let window = settingsWindow {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -169,8 +205,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentView = NSHostingView(rootView: settingsView)
         window.center()
         window.isReleasedWhenClosed = false
+        window.delegate = self
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow = window
+    }
+    
+    // MARK: - NSWindowDelegate
+    
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        // 隐藏窗口而不是关闭，避免 NSHostingView 渲染管线失效
+        sender.orderOut(nil)
+        return false
     }
 }

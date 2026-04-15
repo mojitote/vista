@@ -8,23 +8,24 @@ class TrackpadTriggerManager {
     var onTrigger: ((NSPoint, NSScreen) -> Void)?
     
     private var lastTriggerTime: Date = .distantPast
-    private var touchCount: Int = 0
-    private var touchStartTime: Date = .distantPast
+    private var isStarted = false
     
     func start() {
-        // 请求辅助功能权限（仅弹窗提示，不阻塞）
-        let trusted = AXIsProcessTrustedWithOptions([
-            kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true
-        ] as CFDictionary)
+        guard !isStarted else { return }
+        
+        // 不弹权限提示，静默检查
+        let trusted = AXIsProcessTrustedWithOptions(nil)
         
         if !trusted {
-            NSLog("[TrackpadTrigger] Accessibility permission not yet granted")
+            // 弹权限提示
+            AXIsProcessTrustedWithOptions([
+                kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true
+            ] as CFDictionary)
+            NSLog("[TrackpadTrigger] Accessibility permission not granted, start failed")
+            return
         }
         
-        // 不管权限状态都尝试创建 event tap
-        // 如果没权限会返回 nil，此时静默失败
-        // 用户授权后需要重启 app 才能生效
-        let eventMask: CGEventMask = (1 << 29)  // NSEvent.EventType.gesture rawValue = 29
+        let eventMask: CGEventMask = (1 << 29)  // gesture events
         
         guard let tap = CGEvent.tapCreate(
             tap: .cghidEventTap,
@@ -39,7 +40,7 @@ class TrackpadTriggerManager {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            NSLog("[TrackpadTrigger] Failed to create event tap - need Accessibility permission")
+            NSLog("[TrackpadTrigger] Failed to create event tap")
             return
         }
         
@@ -47,7 +48,8 @@ class TrackpadTriggerManager {
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        NSLog("[TrackpadTrigger] Event tap started")
+        isStarted = true
+        NSLog("[TrackpadTrigger] Event tap started successfully")
     }
     
     func stop() {
@@ -59,36 +61,28 @@ class TrackpadTriggerManager {
         }
         eventTap = nil
         runLoopSource = nil
+        isStarted = false
     }
     
     private func handleCGEvent(_ event: CGEvent) {
         guard isEnabled else { return }
         
-        // 尝试读取私有字段：touchCount (field 135)
-        // 如果不可用，值会是 0
         let touches = event.getIntegerValueField(CGEventField(rawValue: 135)!)
         let phase = event.getIntegerValueField(CGEventField(rawValue: 132)!)
         
-        // 调试输出
-        if touches > 0 {
-            NSLog("[TrackpadTrigger] touches=\(touches) phase=\(phase)")
-        }
-        
-        // 方案 A: 私有字段可用 — 三指 tap (phase 1=began)
+        // 方案 A: 私有字段可用
         if touches == 3 && phase == 1 {
             triggerIfReady()
             return
         }
         
-        // 方案 B: 如果私有字段不可用(touches=0)，尝试用 NSEvent 解析
+        // 方案 B: NSEvent fallback
         if touches == 0 {
             if let nsEvent = NSEvent(cgEvent: event) {
-                // magnification 手势 beginPhase 时检查触摸数
                 let allTouches = nsEvent.allTouches()
                 if allTouches.count == 3 {
                     let began = allTouches.filter { $0.phase == .began }
                     if began.count >= 1 {
-                        NSLog("[TrackpadTrigger] NSEvent 3-finger touch detected")
                         triggerIfReady()
                     }
                 }

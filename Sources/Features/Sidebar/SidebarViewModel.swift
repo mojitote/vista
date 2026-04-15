@@ -227,10 +227,25 @@ class SidebarViewModel: ObservableObject {
     }
     
     func focusWindow(id: Int, spaceIndex: Int) {
+        // 查找窗口的 pid 用于 fallback
+        let windowPid = displayGroups.flatMap(\.spaces).flatMap(\.windows).first(where: { $0.id == id })?.pid
+        
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.focusSpace(index: spaceIndex)
             Thread.sleep(forTimeInterval: 0.3)
-            try? self?.yabaiService.focusWindow(id: id)
+            do {
+                try self?.yabaiService.focusWindow(id: id)
+            } catch {
+                NSLog("[Vista] yabai focusWindow failed for id=\(id), trying NSRunningApplication fallback")
+                // Fallback: 用 NSRunningApplication 激活应用
+                if let pid = windowPid {
+                    DispatchQueue.main.async {
+                        if let app = NSRunningApplication(processIdentifier: pid_t(pid)) {
+                            app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+                        }
+                    }
+                }
+            }
         }
     }
     

@@ -152,6 +152,8 @@ class YabaiService {
     }
     
     func focusWindow(id: Int) throws {
+        // 先尝试取消最小化（对非最小化窗口无害）
+        _ = try? sendMessage(args: ["window", "\(id)", "--deminimize", "\(id)"])
         _ = try sendMessage(args: ["window", "--focus", "\(id)"])
     }
     
