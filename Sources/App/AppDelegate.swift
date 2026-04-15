@@ -39,8 +39,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var sceneStore: SceneStore!
     private var spaceNameStore: SpaceNameStore!
     private var trackpadManager: TrackpadTriggerManager!
+    private var presentationStore = SidebarPresentationStore()
     private var settingsWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
+    private var popupAnchor: (screen: NSScreen, mousePosition: NSPoint)?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         settingsStore = SettingsStore.shared
@@ -58,6 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             sceneStore: sceneStore,
             spaceNameStore: spaceNameStore,
             settingsStore: settingsStore,
+            presentationStore: presentationStore,
             onDismiss: { [weak self] in
                 self?.dismissSidebar()
             },
@@ -68,6 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         sidebarPanel.setSwiftUIContent(sidebarView)
         sidebarPanel.onDismiss = { [weak self] in
             self?.sidebarViewModel.stopPolling()
+            self?.popupAnchor = nil
         }
         
         // Initialize Hot Zone
@@ -172,6 +176,35 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 self?.hotZoneManager.delay = delay
             }
             .store(in: &cancellables)
+        
+        sidebarViewModel.$displayGroups
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePopupLayoutIfNeeded()
+            }
+            .store(in: &cancellables)
+        
+        sceneStore.$scenes
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePopupLayoutIfNeeded()
+            }
+            .store(in: &cancellables)
+        
+        sceneStore.$activeSceneID
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePopupLayoutIfNeeded()
+            }
+            .store(in: &cancellables)
+        
+        settingsStore.$sidebarWidth
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePopupLayoutIfNeeded()
+            }
+            .store(in: &cancellables)
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -182,6 +215,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     private func showSidebar(on screen: NSScreen) {
         guard !sidebarPanel.isVisible else { return }
+        presentationStore.mode = .fullHeight
+        popupAnchor = nil
         // #region debug-point E:show-sidebar
         vistaDebugReport(
             hypothesisId: "E",
@@ -219,6 +254,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             dismissSidebar()
             return
         }
+        presentationStore.mode = .popup
+        popupAnchor = (screen, mousePosition)
         // #region debug-point E:show-sidebar-at-position
         vistaDebugReport(
             hypothesisId: "E",
@@ -232,11 +269,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             ]
         )
         // #endregion
-        
+        let height = popupPanelHeight(for: screen, mousePosition: mousePosition)
+        presentationStore.popupContentMaxHeight = popupContentMaxHeight(forPanelHeight: height)
         sidebarPanel.showAtPosition(
             on: screen,
             mousePosition: mousePosition,
-            width: settingsStore.sidebarWidth
+            width: settingsStore.sidebarWidth,
+            height: height
         )
         sidebarPanel.updateSidebarColor(color: settingsStore.sidebarNSColor, opacity: settingsStore.sidebarOpacity)
         sidebarViewModel.loadData(withThumbnails: settingsStore.showThumbnails)
@@ -300,6 +339,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     private func dismissSidebar() {
+        popupAnchor = nil
         sidebarPanel.dismiss()
     }
     
@@ -345,5 +385,64 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // 隐藏窗口而不是关闭，避免 NSHostingView 渲染管线失效
         sender.orderOut(nil)
         return false
+    }
+    
+    private func updatePopupLayoutIfNeeded() {
+        guard presentationStore.mode == .popup,
+              sidebarPanel.isVisible,
+              let popupAnchor else { return }
+        let height = popupPanelHeight(for: popupAnchor.screen, mousePosition: popupAnchor.mousePosition)
+        presentationStore.popupContentMaxHeight = popupContentMaxHeight(forPanelHeight: height)
+        sidebarPanel.resizePopup(
+            on: popupAnchor.screen,
+            mousePosition: popupAnchor.mousePosition,
+            width: settingsStore.sidebarWidth,
+            height: height
+        )
+    }
+    
+    private func popupPanelHeight(for screen: NSScreen, mousePosition: NSPoint) -> CGFloat {
+        let availableHeight = max(
+            AppConstants.popupMinHeight,
+            mousePosition.y - screen.visibleFrame.minY
+        )
+        return min(estimatedPopupHeight(), availableHeight)
+    }
+    
+    private func popupContentMaxHeight(forPanelHeight panelHeight: CGFloat) -> CGFloat {
+        max(80, panelHeight - AppConstants.popupHeaderHeight)
+    }
+    
+    private func estimatedPopupHeight() -> CGFloat {
+        if !sidebarViewModel.isYabaiRunning {
+            return 220
+        }
+        
+        if sidebarViewModel.isLoading && sidebarViewModel.displayGroups.isEmpty {
+            return 150
+        }
+        
+        let groups = sidebarViewModel.filteredDisplayGroups
+        var height = AppConstants.popupHeaderHeight + AppConstants.popupSectionTopBottomPadding
+        
+        for group in groups {
+            height += AppConstants.popupDisplayHeaderHeight
+            for space in group.spaces {
+                height += AppConstants.popupSpaceRowHeight
+                if space.isExpanded {
+                    height += CGFloat(space.windows.count) * AppConstants.popupWindowRowHeight
+                }
+            }
+            height += AppConstants.popupSectionDividerHeight
+        }
+        
+        height += AppConstants.popupSceneHeaderHeight
+        if sceneStore.scenes.isEmpty {
+            height += AppConstants.popupEmptySceneHeight
+        } else {
+            height += CGFloat(sceneStore.scenes.count) * AppConstants.popupSceneRowHeight
+        }
+        
+        return max(AppConstants.popupMinHeight, height)
     }
 }

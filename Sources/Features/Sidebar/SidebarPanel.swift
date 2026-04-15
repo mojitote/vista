@@ -125,26 +125,65 @@ class SidebarPanel: NSPanel {
     }
     
     func showAtPosition(on screen: NSScreen, mousePosition: NSPoint, width: CGFloat = AppConstants.defaultSidebarWidth) {
+        showAtPosition(
+            on: screen,
+            mousePosition: mousePosition,
+            width: width,
+            height: screen.visibleFrame.height
+        )
+    }
+    
+    func showAtPosition(
+        on screen: NSScreen,
+        mousePosition: NSPoint,
+        width: CGFloat = AppConstants.defaultSidebarWidth,
+        height: CGFloat
+    ) {
         guard !isAnimating else { return }
         
-        let height = screen.visibleFrame.height
-        let x = max(screen.frame.minX, min(mousePosition.x - width / 2, screen.frame.maxX - width))
-        let y = screen.visibleFrame.minY
-        let targetFrame = NSRect(x: x, y: y, width: width, height: height)
+        let targetFrame = popupFrame(
+            on: screen,
+            mousePosition: mousePosition,
+            width: width,
+            height: height
+        )
+        let startWidth = max(width * 0.94, width - 16)
+        let startHeight = max(height * 0.92, height - 24)
+        let startFrame = NSRect(
+            x: targetFrame.minX,
+            y: targetFrame.maxY - startHeight,
+            width: startWidth,
+            height: startHeight
+        )
         
         alphaValue = 0
-        setFrame(targetFrame, display: true)
+        setFrame(startFrame, display: false)
         orderFrontRegardless()
         
         isAnimating = true
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().setFrame(targetFrame, display: true)
             self.animator().alphaValue = 1
         }, completionHandler: { [weak self] in
             self?.isAnimating = false
             self?.startMouseMonitoring()
         })
+    }
+    
+    func resizePopup(on screen: NSScreen, mousePosition: NSPoint, width: CGFloat, height: CGFloat) {
+        let targetFrame = popupFrame(
+            on: screen,
+            mousePosition: mousePosition,
+            width: width,
+            height: height
+        )
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.12
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().setFrame(targetFrame, display: true)
+        }
     }
     
     func dismiss() {
@@ -255,6 +294,17 @@ class SidebarPanel: NSPanel {
     private func cancelDismissTimer() {
         dismissTimer?.cancel()
         dismissTimer = nil
+    }
+    
+    private func popupFrame(on screen: NSScreen, mousePosition: NSPoint, width: CGFloat, height: CGFloat) -> NSRect {
+        let visibleFrame = screen.visibleFrame
+        let clampedWidth = min(width, visibleFrame.width)
+        let maxHeight = max(AppConstants.popupMinHeight, mousePosition.y - visibleFrame.minY)
+        let clampedHeight = min(height, maxHeight)
+        let x = min(max(mousePosition.x, visibleFrame.minX), visibleFrame.maxX - clampedWidth)
+        let topY = min(max(mousePosition.y, visibleFrame.minY + clampedHeight), visibleFrame.maxY)
+        let y = max(visibleFrame.minY, topY - clampedHeight)
+        return NSRect(x: x, y: y, width: clampedWidth, height: clampedHeight)
     }
     
     deinit {
