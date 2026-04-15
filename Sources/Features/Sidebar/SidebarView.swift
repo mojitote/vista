@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SidebarView: View {
     @ObservedObject var viewModel: SidebarViewModel
+    @ObservedObject var sceneStore: SceneStore
+    @ObservedObject var spaceNameStore: SpaceNameStore
     var onDismiss: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     
@@ -34,19 +36,39 @@ struct SidebarView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(viewModel.displayGroups) { group in
+                        ForEach(viewModel.filteredDisplayGroups) { group in
                             DisplaySection(
                                 group: group,
                                 viewModel: viewModel,
+                                spaceNameStore: spaceNameStore,
                                 onDismiss: onDismiss
                             )
                         }
                     }
                     .padding(.vertical, 8)
                 }
+                
+                // Scene 区域（底部固定）
+                SceneBar(sceneStore: sceneStore)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .bottom) {
+            if let toast = viewModel.toastMessage {
+                Text(toast)
+                    .font(.system(size: 11))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.black.opacity(0.75))
+                    )
+                    .padding(.bottom, 60)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.toastMessage)
+            }
+        }
     }
     
     private var yabaiNotRunningView: some View {

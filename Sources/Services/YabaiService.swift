@@ -155,6 +155,22 @@ class YabaiService {
         _ = try sendMessage(args: ["window", "--focus", "\(id)"])
     }
     
+    func moveWindowToSpace(windowID: Int, spaceIndex: Int) throws {
+        _ = try sendMessage(args: ["window", "\(windowID)", "--space", "\(spaceIndex)"])
+    }
+    
+    func closeWindow(id: Int) throws {
+        _ = try sendMessage(args: ["window", "\(id)", "--close"])
+    }
+    
+    func destroySpace(index: Int) throws {
+        _ = try sendMessage(args: ["space", "\(index)", "--destroy"])
+    }
+    
+    func toggleNativeFullscreen(windowID: Int) throws {
+        _ = try sendMessage(args: ["window", "\(windowID)", "--toggle", "native-fullscreen"])
+    }
+    
     // MARK: - Connection Check
     
     var isYabaiRunning: Bool {

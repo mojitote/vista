@@ -8,6 +8,7 @@ class HotZoneManager {
     
     var isEnabled = true
     var delay: TimeInterval = AppConstants.hotZoneDelay
+    var hotZoneWidth: CGFloat = AppConstants.hotZoneWidth
     var onTrigger: ((NSScreen) -> Void)?
     
     func start() {
@@ -36,7 +37,7 @@ class HotZoneManager {
         }
         
         // Check if mouse is at the left edge of the screen
-        let isAtLeftEdge = mouseLocation.x <= screen.frame.minX + 1
+        let isAtLeftEdge = mouseLocation.x <= screen.frame.minX + hotZoneWidth
         
         if isAtLeftEdge {
             if !isInHotZone {

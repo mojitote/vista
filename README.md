@@ -146,6 +146,70 @@ open Vista.xcodeproj
 
 编译产物 `Vista.app` 位于 Xcode 的 DerivedData 目录下，可以拷贝到 `/Applications/` 或任意位置使用。
 
+## 已知问题与排错
+
+### yabai v7.1.16+ 在 macOS Sequoia 上 scripting addition 注入失败
+
+**症状**：`sudo yabai --load-sa` 报错 `protection failure` 或进程被直接 killed。
+
+**原因**：yabai v7.1.16+ 使用新版 Clang 编译，scripting addition 的 loader 二进制 PAC ABI 版本为 v1（`caps 0x81`），而 Sequoia 的 Dock.app 使用 PAC ABI v0（`caps 0x80`）。内核强制 ABI 严格匹配，拒绝注入。详见 [yabai#2747](https://github.com/koekeishiya/yabai/issues/2747)。
+
+**macOS Tahoe (26.x) 不受影响**（Dock.app 已升级到 ABI v1）。
+
+**解决方案（任选一种）：**
+
+**方案 A：Patch loader 的 PAC ABI 标记（推荐，可保持最新版 yabai）**
+
+先运行一次 `sudo yabai --load-sa`（让它安装 osax 文件），然后执行 patch 脚本：
+
+```bash
+sudo bash -c '
+FILE="/Library/ScriptingAdditions/yabai.osax/Contents/MacOS/loader"
+read I O <<< $(otool -f "$FILE" | awk "/architecture/{i=\$2} /capabilities 0x81/{f=1} f&&/offset/{print i, \$2; exit}")
+if [ -n "$O" ]; then
+    printf "\x80" | dd of="$FILE" bs=1 seek=$((8 + I*20 + 4)) count=1 conv=notrunc 2>/dev/null
+    printf "\x80" | dd of="$FILE" bs=1 seek=$((O + 11)) count=1 conv=notrunc 2>/dev/null
+    codesign -f -s - "$FILE" 2>/dev/null
+    echo "Patched! caps 0x81 -> 0x80"
+else
+    echo "No caps 0x81 found"
+fi
+'
+sudo yabai --load-sa
+```
+
+> 每次 yabai 升级后需要重新执行此 patch。
+
+**方案 B：降级到 v7.1.15**
+
+```bash
+curl -L https://github.com/koekeishiya/yabai/releases/download/v7.1.15/yabai-v7.1.15.tar.gz -o /tmp/yabai.tar.gz
+mkdir -p /tmp/yabai-old && tar xzf /tmp/yabai.tar.gz -C /tmp/yabai-old
+sudo cp /tmp/yabai-old/archive/bin/yabai /usr/local/bin/yabai
+sudo chmod +x /usr/local/bin/yabai
+```
+
+降级后需重新配置 sudoers（binary hash 变了）：
+
+```bash
+echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 /usr/local/bin/yabai | cut -d " " -f 1) /usr/local/bin/yabai --load-sa" | sudo tee /private/etc/sudoers.d/yabai
+```
+
+### yabai 命令卡住无响应
+
+Homebrew 安装的 yabai v7.1.18 在 Sequoia 上可能出现任何命令（包括 `yabai --version`）卡住的问题。
+
+**解决方案**：使用官方预编译的 v7.1.16 或 v7.1.15 二进制替代（参见上方降级方案）。安装到 `/usr/local/bin/yabai` 后，需在 **系统设置 → 隐私与安全性 → 辅助功能** 中重新授权该路径。
+
+### Vista 点击窗口无法跳转
+
+可能原因：
+1. **scripting addition 未加载** — 跨 Space 切换需要 SA，执行 `sudo yabai --load-sa` 并确认无报错
+2. **原生全屏窗口** — `is-native-fullscreen: true` 的窗口（如全屏的 ChatGPT）yabai 无法控制，这是 macOS 限制
+3. **同 Space 窗口正常、跨 Space 窗口失败** — 说明 SA 未加载，参考上述步骤
+
+---
+
 ## 项目结构
 
 ```

@@ -5,6 +5,7 @@ enum AppConstants {
     static let minSidebarWidth: CGFloat = 200
     static let maxSidebarWidth: CGFloat = 400
     static let hotZoneDelay: TimeInterval = 0.2  // 200ms
+    static let hotZoneWidth: CGFloat = 2  // 默认热区宽度（像素）
     static let pollingInterval: TimeInterval = 3.0  // 3s
     static let animationDuration: TimeInterval = 0.15  // 150ms
     static let mouseOutDelay: TimeInterval = 0.3  // 300ms

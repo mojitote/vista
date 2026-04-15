@@ -3,79 +3,145 @@ import SwiftUI
 struct SpaceRow: View {
     let space: SpaceItem
     @ObservedObject var viewModel: SidebarViewModel
+    @ObservedObject var spaceNameStore: SpaceNameStore
     var onDismiss: (() -> Void)?
     @State private var isHovered = false
+    @State private var isDropTargeted = false
+    @State private var isRenaming = false
+    @State private var renameText = ""
     
     var body: some View {
         VStack(spacing: 0) {
             // Space header
-            HStack(spacing: 0) {
+            HStack(spacing: 6) {
                 // Active indicator
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(space.hasFocus ? Color.accentColor : Color.clear)
-                    .frame(width: AppConstants.activeIndicatorWidth, height: 20)
-                    .padding(.trailing, 8)
+                if space.hasFocus {
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(Color.accentColor)
+                        .frame(width: AppConstants.activeIndicatorWidth, height: 16)
+                } else {
+                    Color.clear
+                        .frame(width: AppConstants.activeIndicatorWidth, height: 16)
+                }
                 
-                // Space name
-                Text(space.displayName)
-                    .font(.system(size: 13, weight: space.hasFocus ? .semibold : .regular))
+                Image(systemName: space.isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .frame(width: 12)
+                
+                Text(spaceNameStore.name(forSpaceIndex: space.index) ?? space.displayName)
+                    .font(.system(size: 12, weight: space.hasFocus ? .semibold : .medium))
                     .foregroundColor(space.hasFocus ? .primary : .secondary)
+                
+                if space.isVisible {
+                    Circle()
+                        .fill(Color.green.opacity(0.7))
+                        .frame(width: 5, height: 5)
+                }
+                
+                if space.isNativeFullscreen {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 8))
+                        .foregroundColor(.orange.opacity(0.8))
+                        .help("全屏模式")
+                }
                 
                 Spacer()
                 
-                // Expand/collapse button
-                if !space.windows.isEmpty {
-                    Image(systemName: space.isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                        .onTapGesture {
-                            viewModel.toggleSpaceExpanded(spaceId: space.id)
-                        }
-                }
+                Text("\(space.windows.count)")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(backgroundColor)
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isDropTargeted ? Color.accentColor.opacity(0.15) : (isHovered ? Color.primary.opacity(0.05) : Color.clear))
             )
             .contentShape(Rectangle())
             .onHover { hovering in
                 isHovered = hovering
             }
             .onTapGesture {
-                viewModel.focusSpace(index: space.index)
-                onDismiss?()
+                viewModel.toggleSpaceExpanded(spaceId: space.id)
+            }
+            .contextMenu {
+                Button(action: {
+                    viewModel.focusSpace(index: space.index)
+                }) {
+                    Label("切换到此 Space", systemImage: "arrow.right.circle")
+                }
+                
+                Button(action: {
+                    renameText = spaceNameStore.name(forSpaceIndex: space.index) ?? space.displayName
+                    isRenaming = true
+                }) {
+                    Label("重命名", systemImage: "pencil")
+                }
+                
+                Divider()
+                
+                Button(role: .destructive, action: {
+                    viewModel.destroySpace(index: space.index)
+                }) {
+                    Label("关闭 Space", systemImage: "xmark.circle")
+                }
+            }
+            .onDrop(of: [.text], isTargeted: $isDropTargeted) { providers in
+                handleDrop(providers: providers)
+            }
+            .popover(isPresented: $isRenaming, arrowEdge: .trailing) {
+                VStack(spacing: 8) {
+                    Text("重命名 Space")
+                        .font(.headline)
+                    TextField("名称", text: $renameText)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 160)
+                        .onSubmit {
+                            spaceNameStore.setName(renameText, forSpaceIndex: space.index)
+                            isRenaming = false
+                        }
+                    HStack {
+                        Button("取消") {
+                            isRenaming = false
+                        }
+                        Spacer()
+                        Button("确定") {
+                            spaceNameStore.setName(renameText, forSpaceIndex: space.index)
+                            isRenaming = false
+                        }
+                        .keyboardShortcut(.defaultAction)
+                    }
+                }
+                .padding(12)
             }
             
             // Windows list
             if space.isExpanded {
-                if space.windows.isEmpty {
-                    Text("No windows")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 32)
-                        .padding(.vertical, 4)
-                } else {
-                    ForEach(space.windows) { window in
-                        WindowRow(
-                            window: window,
-                            spaceIndex: space.index,
-                            viewModel: viewModel,
-                            onDismiss: onDismiss
-                        )
-                    }
+                ForEach(space.windows) { window in
+                    WindowRow(
+                        window: window,
+                        spaceIndex: space.index,
+                        viewModel: viewModel,
+                        onDismiss: onDismiss
+                    )
                 }
             }
         }
     }
     
-    private var backgroundColor: Color {
-        if space.hasFocus {
-            return Color.accentColor.opacity(0.1)
-        } else if isHovered {
-            return Color.primary.opacity(0.05)
+    private func handleDrop(providers: [NSItemProvider]) -> Bool {
+        guard let provider = providers.first else { return false }
+        
+        provider.loadItem(forTypeIdentifier: "public.text", options: nil) { data, _ in
+            guard let data = data as? Data,
+                  let text = String(data: data, encoding: .utf8),
+                  let windowID = Int(text) else { return }
+            
+            DispatchQueue.main.async {
+                viewModel.moveWindowToSpace(windowID: windowID, spaceIndex: space.index)
+            }
         }
-        return Color.clear
+        return true
     }
 }

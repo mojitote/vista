@@ -9,6 +9,7 @@ class SidebarPanel: NSPanel {
     private var localClickMonitor: Any?
     private var dismissTimer: DispatchSourceTimer?
     private var isAnimating = false
+    private var colorOverlayView: NSView?
     var onDismiss: (() -> Void)?
     
     init() {
@@ -35,6 +36,39 @@ class SidebarPanel: NSPanel {
         visualEffect.blendingMode = .behindWindow
         
         contentView = visualEffect
+    }
+    
+    // MARK: - Sidebar Color
+    
+    func updateSidebarColor(color: NSColor?, opacity: Double) {
+        guard let visualEffect = contentView as? NSVisualEffectView else { return }
+        
+        if let color = color {
+            // 自定义颜色模式：禁用毛玻璃，使用纯色叠加
+            visualEffect.material = .sidebar
+            visualEffect.state = .active
+            
+            if colorOverlayView == nil {
+                let overlay = NSView()
+                overlay.wantsLayer = true
+                overlay.translatesAutoresizingMaskIntoConstraints = false
+                visualEffect.addSubview(overlay, positioned: .below, relativeTo: visualEffect.subviews.first)
+                NSLayoutConstraint.activate([
+                    overlay.topAnchor.constraint(equalTo: visualEffect.topAnchor),
+                    overlay.bottomAnchor.constraint(equalTo: visualEffect.bottomAnchor),
+                    overlay.leadingAnchor.constraint(equalTo: visualEffect.leadingAnchor),
+                    overlay.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor),
+                ])
+                colorOverlayView = overlay
+            }
+            colorOverlayView?.layer?.backgroundColor = color.withAlphaComponent(CGFloat(opacity)).cgColor
+            colorOverlayView?.isHidden = false
+        } else {
+            // 默认毛玻璃模式
+            colorOverlayView?.isHidden = true
+            visualEffect.material = .sidebar
+            visualEffect.state = .active
+        }
     }
     
     func setSwiftUIContent<Content: View>(_ content: Content) {
@@ -73,15 +107,17 @@ class SidebarPanel: NSPanel {
             height: visibleFrame.height
         )
         
+        alphaValue = 0
         setFrame(startFrame, display: false)
         orderFrontRegardless()
         
-        // Animate slide in
+        // Animate slide in + fade in
         isAnimating = true
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = AppConstants.animationDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().setFrame(targetFrame, display: true)
+            self.animator().alphaValue = 1
         }, completionHandler: { [weak self] in
             self?.isAnimating = false
             self?.startMouseMonitoring()
@@ -107,9 +143,11 @@ class SidebarPanel: NSPanel {
             context.duration = AppConstants.animationDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             self.animator().setFrame(targetFrame, display: true)
+            self.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             self?.isAnimating = false
             self?.orderOut(nil)
+            self?.alphaValue = 1  // 重置透明度，下次 show 时正常显示
             self?.onDismiss?()
         })
     }

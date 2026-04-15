@@ -20,6 +20,7 @@ struct SpaceItem: Identifiable {
     let label: String
     let hasFocus: Bool
     let isVisible: Bool
+    let isNativeFullscreen: Bool
     var windows: [WindowItem]
     
     var displayName: String {
@@ -55,6 +56,26 @@ class SidebarViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
     @Published var isYabaiRunning = false
+    @Published var toastMessage: String?
+    
+    /// 窗口自定义显示名称（运行时，windowID -> 自定义名称）
+    @Published var windowNames: [Int: String] = [:]
+    
+    var sceneStore: SceneStore?
+    
+    /// 根据当前 Scene 过滤后的 displayGroups
+    var filteredDisplayGroups: [DisplayGroup] {
+        guard let filter = sceneStore?.filteredSpaceIndices else {
+            return displayGroups
+        }
+        return displayGroups.compactMap { group in
+            let filteredSpaces = group.spaces.filter { filter.contains($0.index) }
+            guard !filteredSpaces.isEmpty else { return nil }
+            var g = group
+            g.spaces = filteredSpaces
+            return g
+        }
+    }
     
     private var pollingTimer: Timer?
     private var appIconCache: [Int: NSImage] = [:]  // pid -> icon
@@ -95,7 +116,11 @@ class SidebarViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.error = error.localizedDescription
                     self.isLoading = false
-                    self.isYabaiRunning = (error as? YabaiError) != .socketNotFound
+                    if case .socketNotFound = error as? YabaiError {
+                        self.isYabaiRunning = false
+                    } else {
+                        self.isYabaiRunning = true
+                    }
                 }
             }
         }
@@ -146,6 +171,7 @@ class SidebarViewModel: ObservableObject {
                         label: space.label,
                         hasFocus: space.hasFocus,
                         isVisible: space.isVisible,
+                        isNativeFullscreen: space.isNativeFullscreen,
                         windows: spaceWindows
                     )
                 }
@@ -203,7 +229,62 @@ class SidebarViewModel: ObservableObject {
     func focusWindow(id: Int, spaceIndex: Int) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.focusSpace(index: spaceIndex)
+            Thread.sleep(forTimeInterval: 0.3)
             try? self?.yabaiService.focusWindow(id: id)
+        }
+    }
+    
+    func moveWindowToSpace(windowID: Int, spaceIndex: Int) {
+        // 全屏 Space 无法移入窗口
+        let targetSpace = displayGroups.flatMap(\.spaces).first(where: { $0.index == spaceIndex })
+        if targetSpace?.isNativeFullscreen == true {
+            showToast("无法移入：目标 Space 处于全屏模式")
+            return
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            try? self?.yabaiService.moveWindowToSpace(windowID: windowID, spaceIndex: spaceIndex)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self?.loadData(withThumbnails: false)
+            }
+        }
+    }
+    
+    func closeWindow(id: Int) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            try? self?.yabaiService.closeWindow(id: id)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self?.loadData(withThumbnails: false)
+            }
+        }
+    }
+    
+    func destroySpace(index: Int) {
+        // 检查是否是该 Display 上最后一个普通 Space
+        let displayIndex = displayGroups.first(where: { $0.spaces.contains(where: { $0.index == index }) })?.index
+        if let displayIndex = displayIndex {
+            let group = displayGroups.first(where: { $0.index == displayIndex })
+            let normalSpaces = group?.spaces.filter({ !$0.isNativeFullscreen }) ?? []
+            if normalSpaces.count <= 1 {
+                showToast("无法关闭：这是该显示器上最后一个普通 Space")
+                return
+            }
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            try? self?.yabaiService.destroySpace(index: index)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self?.loadData(withThumbnails: false)
+            }
+        }
+    }
+    
+    private func showToast(_ message: String) {
+        toastMessage = message
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+            if self?.toastMessage == message {
+                self?.toastMessage = nil
+            }
         }
     }
     

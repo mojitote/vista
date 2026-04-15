@@ -3,6 +3,7 @@ import SwiftUI
 struct DisplaySection: View {
     let group: DisplayGroup
     @ObservedObject var viewModel: SidebarViewModel
+    @ObservedObject var spaceNameStore: SpaceNameStore
     var onDismiss: (() -> Void)?
     
     var body: some View {
@@ -25,6 +26,7 @@ struct DisplaySection: View {
                 SpaceRow(
                     space: space,
                     viewModel: viewModel,
+                    spaceNameStore: spaceNameStore,
                     onDismiss: onDismiss
                 )
             }

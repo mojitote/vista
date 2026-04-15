@@ -10,18 +10,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKeysManager: HotKeysManager!
     private var menuBarManager: MenuBarManager!
     private var settingsStore: SettingsStore!
+    private var sceneStore: SceneStore!
+    private var spaceNameStore: SpaceNameStore!
     private var settingsWindow: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         settingsStore = SettingsStore.shared
+        sceneStore = SceneStore.shared
+        spaceNameStore = SpaceNameStore.shared
         
         // Initialize ViewModel
         sidebarViewModel = SidebarViewModel()
+        sidebarViewModel.sceneStore = sceneStore
         
         // Initialize Sidebar Panel
         sidebarPanel = SidebarPanel()
         let sidebarView = SidebarView(
             viewModel: sidebarViewModel,
+            sceneStore: sceneStore,
+            spaceNameStore: spaceNameStore,
             onDismiss: { [weak self] in
                 self?.dismissSidebar()
             },
@@ -38,6 +45,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotZoneManager = HotZoneManager()
         hotZoneManager.delay = settingsStore.hotZoneDelay
         hotZoneManager.isEnabled = settingsStore.hotZoneEnabled
+        hotZoneManager.hotZoneWidth = settingsStore.hotZoneWidth
         hotZoneManager.onTrigger = { [weak self] screen in
             self?.showSidebar(on: screen)
         }
@@ -48,9 +56,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeysManager.onToggleSidebar = { [weak self] in
             self?.toggleSidebar()
         }
-        if let keyCombo = settingsStore.sidebarKeyCombo {
-            hotKeysManager.updateSidebarHotKey(keyCombo: keyCombo)
-        }
+        // 使用用户保存的快捷键，否则默认 Option+Tab
+        let keyCombo = settingsStore.sidebarKeyCombo ?? KeyCombo(key: .tab, modifiers: .option)
+        hotKeysManager.updateSidebarHotKey(keyCombo: keyCombo)
         
         // Initialize Menu Bar
         menuBarManager = MenuBarManager()
@@ -73,6 +81,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard !sidebarPanel.isVisible else { return }
         
         sidebarPanel.show(on: screen, width: settingsStore.sidebarWidth)
+        sidebarPanel.updateSidebarColor(color: settingsStore.sidebarNSColor, opacity: settingsStore.sidebarOpacity)
         sidebarViewModel.loadData(withThumbnails: settingsStore.showThumbnails)
         sidebarViewModel.startPolling()
     }
@@ -102,7 +111,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         let settingsView = SettingsView(store: settingsStore)
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 450),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
