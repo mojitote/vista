@@ -195,6 +195,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.updatePopupLayoutIfNeeded()
+                self?.applySidebarColor()
             }
             .store(in: &cancellables)
         
@@ -232,7 +233,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // #endregion
         
         sidebarPanel.show(on: screen, width: settingsStore.sidebarWidth)
-        sidebarPanel.updateSidebarColor(color: settingsStore.sidebarNSColor, opacity: settingsStore.sidebarOpacity)
+        applySidebarColor()
         sidebarViewModel.loadData(withThumbnails: settingsStore.showThumbnails)
         sidebarViewModel.startPolling()
     }
@@ -277,7 +278,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             width: settingsStore.sidebarWidth,
             height: height
         )
-        sidebarPanel.updateSidebarColor(color: settingsStore.sidebarNSColor, opacity: settingsStore.sidebarOpacity)
+        applySidebarColor()
         sidebarViewModel.loadData(withThumbnails: settingsStore.showThumbnails)
         sidebarViewModel.startPolling()
     }
@@ -399,6 +400,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             width: settingsStore.sidebarWidth,
             height: height
         )
+    }
+    
+    /// 根据激活 Scene 更新面板底色：有 Scene 用主题色，否则用用户设置的颜色
+    private func applySidebarColor() {
+        if let scene = sceneStore.activeScene,
+           let color = NSColor(hex: scene.colorHex) {
+            sidebarPanel.updateSidebarColor(color: color, opacity: 1.0)
+        } else {
+            sidebarPanel.updateSidebarColor(color: settingsStore.sidebarNSColor, opacity: settingsStore.sidebarOpacity)
+        }
     }
     
     private func popupPanelHeight(for screen: NSScreen, mousePosition: NSPoint) -> CGFloat {

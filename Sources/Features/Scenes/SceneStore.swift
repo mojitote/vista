@@ -18,15 +18,15 @@ class SceneStore: ObservableObject {
         return scenes.first(where: { $0.id == id })
     }
     
-    /// 当前 Scene 下的 Space 编号集合，nil 表示显示全部
-    var filteredSpaceIndices: Set<Int>? {
+    /// 当前 Scene 下的 Space UUID 集合，nil 表示显示全部
+    var filteredSpaceUUIDs: Set<String>? {
         guard let scene = activeScene else { return nil }
-        return scene.spaceIndices.isEmpty ? nil : Set(scene.spaceIndices)
+        return scene.spaceUUIDs.isEmpty ? nil : Set(scene.spaceUUIDs)
     }
     
-    /// 根据 Space index 查找归属的 Scene
-    func scene(forSpaceIndex index: Int) -> VistaScene? {
-        scenes.first(where: { $0.spaceIndices.contains(index) })
+    /// 根据 Space UUID 查找归属的 Scene
+    func scene(forSpaceUUID uuid: String) -> VistaScene? {
+        scenes.first(where: { $0.spaceUUIDs.contains(uuid) })
     }
     
     init() {

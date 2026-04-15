@@ -19,20 +19,10 @@ struct SidebarView: View {
     var onDismiss: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     
-    /// 激活 Scene 的主题色（低透明度），用于整个面板背景
-    private var panelBackgroundColor: Color {
-        guard let scene = sceneStore.activeScene,
-              let nsColor = NSColor(hex: scene.colorHex) else {
-            return Color.clear
-        }
-        return Color(nsColor: nsColor).opacity(0.05)
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             contentBody
         }
-        .background(panelBackgroundColor)
         .frame(
             maxWidth: .infinity,
             maxHeight: presentationStore.mode == .fullHeight ? .infinity : nil,

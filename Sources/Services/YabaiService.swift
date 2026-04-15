@@ -169,6 +169,10 @@ class YabaiService {
         _ = try sendMessage(args: ["space", "\(index)", "--destroy"])
     }
     
+    func moveSpaceToDisplay(spaceIndex: Int, displayIndex: Int) throws {
+        _ = try sendMessage(args: ["space", "\(spaceIndex)", "--display", "\(displayIndex)"])
+    }
+    
     func toggleNativeFullscreen(windowID: Int) throws {
         _ = try sendMessage(args: ["window", "\(windowID)", "--toggle", "native-fullscreen"])
     }

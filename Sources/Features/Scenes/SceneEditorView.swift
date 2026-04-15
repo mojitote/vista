@@ -6,22 +6,20 @@ struct SceneEditorView: View {
     
     @State private var name: String = ""
     @State private var icon: String = "square.grid.2x2"
-    @State private var selectedSpaces: Set<Int> = []
-    @State private var availableSpaces: [Int] = []
+    @State private var selectedSpaceUUIDs: Set<String> = []
+    @State private var availableSpaces: [(uuid: String, index: Int)] = []
     @State private var selectedColorHex: String = "#5E9EFF"
     
     @Environment(\.dismiss) private var dismiss
     
     private var isEditing: Bool { editingScene != nil }
     
-    // 常用 SF Symbol 图标
     private let iconOptions = [
         "square.grid.2x2", "laptopcomputer", "bubble.left.and.bubble.right",
         "paintbrush", "doc.text", "music.note", "gamecontroller",
         "envelope", "calendar", "folder", "globe", "wrench.and.screwdriver"
     ]
     
-    // 预设主题颜色
     private let colorOptions: [(name: String, hex: String)] = [
         ("蓝", "#5E9EFF"), ("绿", "#4ECDC4"), ("紫", "#9B59B6"),
         ("橙", "#F39C12"), ("红", "#E74C3C"), ("粉", "#FD79A8"),
@@ -33,7 +31,6 @@ struct SceneEditorView: View {
             Text(isEditing ? "编辑场景" : "新建场景")
                 .font(.headline)
             
-            // 名称
             TextField("场景名称", text: $name)
                 .textFieldStyle(.roundedBorder)
             
@@ -85,7 +82,7 @@ struct SceneEditorView: View {
                 }
             }
             
-            // Space 选择（每个 Space 只能属于一个 Scene）
+            // Space 选择
             VStack(alignment: .leading, spacing: 4) {
                 Text("包含的 Space")
                     .font(.system(size: 11))
@@ -97,21 +94,21 @@ struct SceneEditorView: View {
                         .foregroundColor(.secondary)
                 } else {
                     LazyVGrid(columns: Array(repeating: GridItem(.fixed(60)), count: 4), spacing: 8) {
-                        ForEach(availableSpaces, id: \.self) { spaceIndex in
-                            let occupiedBy = occupyingScene(forSpace: spaceIndex)
+                        ForEach(availableSpaces, id: \.uuid) { space in
+                            let occupiedBy = occupyingScene(forUUID: space.uuid)
                             let isOccupied = occupiedBy != nil
-                            let isSelected = selectedSpaces.contains(spaceIndex)
+                            let isSelected = selectedSpaceUUIDs.contains(space.uuid)
                             
                             Button(action: {
                                 guard !isOccupied else { return }
                                 if isSelected {
-                                    selectedSpaces.remove(spaceIndex)
+                                    selectedSpaceUUIDs.remove(space.uuid)
                                 } else {
-                                    selectedSpaces.insert(spaceIndex)
+                                    selectedSpaceUUIDs.insert(space.uuid)
                                 }
                             }) {
                                 VStack(spacing: 2) {
-                                    Text("Space \(spaceIndex)")
+                                    Text("Space \(space.index)")
                                         .font(.system(size: 10))
                                     if let scene = occupiedBy {
                                         Text(scene.name)
@@ -141,7 +138,6 @@ struct SceneEditorView: View {
                 }
             }
             
-            // 按钮
             HStack {
                 Button("取消") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -160,12 +156,12 @@ struct SceneEditorView: View {
         .frame(width: 300)
         .onAppear {
             if let scene = editingScene {
-            name = scene.name
-            icon = scene.icon
-            selectedSpaces = Set(scene.spaceIndices)
-            selectedColorHex = scene.colorHex
-        }
-        loadAvailableSpaces()
+                name = scene.name
+                icon = scene.icon
+                selectedSpaceUUIDs = Set(scene.spaceUUIDs)
+                selectedColorHex = scene.colorHex
+            }
+            loadAvailableSpaces()
         }
     }
     
@@ -176,14 +172,14 @@ struct SceneEditorView: View {
         if var scene = editingScene {
             scene.name = trimmedName
             scene.icon = icon
-            scene.spaceIndices = Array(selectedSpaces).sorted()
+            scene.spaceUUIDs = Array(selectedSpaceUUIDs)
             scene.colorHex = selectedColorHex
             sceneStore.updateScene(scene)
         } else {
             let scene = VistaScene(
                 name: trimmedName,
                 icon: icon,
-                spaceIndices: Array(selectedSpaces).sorted(),
+                spaceUUIDs: Array(selectedSpaceUUIDs),
                 colorHex: selectedColorHex
             )
             sceneStore.addScene(scene)
@@ -193,17 +189,16 @@ struct SceneEditorView: View {
     private func loadAvailableSpaces() {
         DispatchQueue.global(qos: .userInitiated).async {
             let spaces = (try? YabaiService.shared.querySpaces()) ?? []
-            let indices = spaces.map(\.index).sorted()
+            let mapped = spaces.map { (uuid: $0.uuid, index: $0.index) }.sorted { $0.index < $1.index }
             DispatchQueue.main.async {
-                self.availableSpaces = indices
+                self.availableSpaces = mapped
             }
         }
     }
     
-    /// 检查某个 Space 是否已被其他 Scene 占用（排除当前正在编辑的 Scene）
-    private func occupyingScene(forSpace index: Int) -> VistaScene? {
+    private func occupyingScene(forUUID uuid: String) -> VistaScene? {
         sceneStore.scenes.first(where: {
-            $0.id != editingScene?.id && $0.spaceIndices.contains(index)
+            $0.id != editingScene?.id && $0.spaceUUIDs.contains(uuid)
         })
     }
 }

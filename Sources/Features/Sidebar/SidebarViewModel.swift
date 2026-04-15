@@ -24,6 +24,7 @@ struct WindowItem: Identifiable, Equatable {
 
 struct SpaceItem: Identifiable, Equatable {
     let id: Int64
+    let uuid: String
     let index: Int
     let label: String
     let hasFocus: Bool
@@ -42,6 +43,7 @@ struct SpaceItem: Identifiable, Equatable {
     
     static func == (lhs: SpaceItem, rhs: SpaceItem) -> Bool {
         lhs.id == rhs.id &&
+        lhs.uuid == rhs.uuid &&
         lhs.index == rhs.index &&
         lhs.label == rhs.label &&
         lhs.hasFocus == rhs.hasFocus &&
@@ -90,11 +92,11 @@ class SidebarViewModel: ObservableObject {
     
     /// 根据当前 Scene 过滤后的 displayGroups
     var filteredDisplayGroups: [DisplayGroup] {
-        guard let filter = sceneStore?.filteredSpaceIndices else {
+        guard let filter = sceneStore?.filteredSpaceUUIDs else {
             return displayGroups
         }
         return displayGroups.compactMap { group in
-            let filteredSpaces = group.spaces.filter { filter.contains($0.index) }
+            let filteredSpaces = group.spaces.filter { filter.contains($0.uuid) }
             guard !filteredSpaces.isEmpty else { return nil }
             var g = group
             g.spaces = filteredSpaces
@@ -194,6 +196,7 @@ class SidebarViewModel: ObservableObject {
                     
                     return SpaceItem(
                         id: space.id,
+                        uuid: space.uuid,
                         index: space.index,
                         label: space.label,
                         hasFocus: space.hasFocus,
@@ -287,6 +290,15 @@ class SidebarViewModel: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.moveWindowToSpace(windowID: windowID, spaceIndex: spaceIndex)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self?.loadData(withThumbnails: false)
+            }
+        }
+    }
+    
+    func moveSpaceToDisplay(spaceIndex: Int, displayIndex: Int) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            try? self?.yabaiService.moveSpaceToDisplay(spaceIndex: spaceIndex, displayIndex: displayIndex)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self?.loadData(withThumbnails: false)
             }
         }

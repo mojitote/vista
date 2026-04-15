@@ -16,12 +16,6 @@ struct WindowRow: View {
         viewModel.windowNames[window.id] ?? window.app
     }
     
-    private var sceneColor: Color? {
-        guard let scene = sceneStore.scene(forSpaceIndex: spaceIndex) else { return nil }
-        guard let nsColor = NSColor(hex: scene.colorHex) else { return nil }
-        return Color(nsColor: nsColor)
-    }
-    
     var body: some View {
         HStack(spacing: 8) {
             // Active indicator
@@ -78,8 +72,7 @@ struct WindowRow: View {
         .padding(.vertical, DesignTokens.Spacing.xs)
         .background(
             RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
-                .fill(isHovered ? DesignTokens.Colors.hoverBackground :
-                      sceneColor?.opacity(0.08) ?? Color.clear)
+                .fill(isHovered ? DesignTokens.Colors.hoverBackground : Color.clear)
         )
         .contentShape(Rectangle())
         .onHover { hovering in
@@ -159,6 +152,7 @@ struct WindowRow: View {
             NSItemProvider(object: "\(window.id)" as NSString)
         }
         .opacity(window.isMinimized ? 0.5 : 1.0)
+        .padding(.horizontal, DesignTokens.Spacing.md)
     }
 }
 
