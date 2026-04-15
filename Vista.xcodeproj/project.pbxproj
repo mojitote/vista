@@ -20,6 +20,7 @@
 		53F68A47B00FB277A59665BC /* TrackpadTriggerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F132BD22B436B1492416ED9 /* TrackpadTriggerManager.swift */; };
 		585243382E9D052CEBC10FEB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE2F688649E810248701F1AD /* SidebarView.swift */; };
 		6549644813E0D8DF9A158886 /* DisplaySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A186E60E7D8B10C9F4A6EC /* DisplaySection.swift */; };
+		72CC33F5F34223BC08EBD310 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE643961AA77111E24BD791C /* DesignTokens.swift */; };
 		8B1A66BE41626BE78BE0E2DB /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A928F417D9FD49CA964B64 /* MenuBarManager.swift */; };
 		8CA4DBCC433EE58D3E7C4BB9 /* VistaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AE39D4536254D6FCDAE1F2 /* VistaApp.swift */; };
 		92B0CB491048651158401645 /* WindowThumbnailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */; };
@@ -50,6 +51,7 @@
 		A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowThumbnailService.swift; sourceTree = "<group>"; };
 		AE2F688649E810248701F1AD /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		B256EBA3FEDC04DDB4DA7317 /* Vista.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vista.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE643961AA77111E24BD791C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		C0A2512BFCA2DA25380D1A5D /* SpaceNameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceNameStore.swift; sourceTree = "<group>"; };
 		C6032D2A817C998D34E57E29 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CE0145CE19912167B792DF3D /* SidebarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarPanel.swift; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 			children = (
 				0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */,
 				C6032D2A817C998D34E57E29 /* AppDelegate.swift */,
+				BE643961AA77111E24BD791C /* DesignTokens.swift */,
 				F7AE39D4536254D6FCDAE1F2 /* VistaApp.swift */,
 			);
 			path = App;
@@ -269,6 +272,7 @@
 			files = (
 				DC0A7C19183E63682FC3BCBD /* AppConstants.swift in Sources */,
 				9B1A603329566E510E7C54D1 /* AppDelegate.swift in Sources */,
+				72CC33F5F34223BC08EBD310 /* DesignTokens.swift in Sources */,
 				6549644813E0D8DF9A158886 /* DisplaySection.swift in Sources */,
 				20E65BFE93B77D47ECBD58CB /* HotKeysManager.swift in Sources */,
 				0BF23001878266FB32509F0D /* HotZoneManager.swift in Sources */,

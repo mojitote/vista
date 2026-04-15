@@ -4,6 +4,7 @@ struct DisplaySection: View {
     let group: DisplayGroup
     @ObservedObject var viewModel: SidebarViewModel
     @ObservedObject var spaceNameStore: SpaceNameStore
+    @ObservedObject var settingsStore: SettingsStore
     var onDismiss: (() -> Void)?
     
     var body: some View {
@@ -11,15 +12,16 @@ struct DisplaySection: View {
             // Display header
             HStack(spacing: 6) {
                 Image(systemName: "display")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 10))
+                    .foregroundColor(DesignTokens.Colors.sectionHeader)
                 Text(group.displayName)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: DesignTokens.Font.sectionHeaderSize, weight: DesignTokens.Font.sectionHeaderWeight))
+                    .foregroundColor(DesignTokens.Colors.sectionHeader)
                     .textCase(.uppercase)
+                    .tracking(0.5)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, DesignTokens.Spacing.xl)
+            .padding(.vertical, DesignTokens.Spacing.md)
             
             // Spaces
             ForEach(group.spaces) { space in
@@ -27,11 +29,14 @@ struct DisplaySection: View {
                     space: space,
                     viewModel: viewModel,
                     spaceNameStore: spaceNameStore,
+                    settingsStore: settingsStore,
                     onDismiss: onDismiss
                 )
             }
             
-            Divider()
+            Rectangle()
+                .fill(DesignTokens.Colors.separator)
+                .frame(height: 1)
                 .padding(.vertical, 4)
         }
     }

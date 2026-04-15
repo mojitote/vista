@@ -41,14 +41,14 @@ struct SceneBar: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, DesignTokens.Spacing.xl)
+            .padding(.vertical, DesignTokens.Spacing.md)
             
             // Scene 列表
             if sceneStore.scenes.isEmpty {
                 Text("无场景")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.subtleText)
                     .padding(.vertical, 8)
             } else {
                 ForEach(sceneStore.scenes) { scene in

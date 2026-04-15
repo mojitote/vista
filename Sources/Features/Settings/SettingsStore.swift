@@ -26,6 +26,10 @@ class SettingsStore: ObservableObject {
     @Published var fullscreenDropAction: FullscreenDropAction = .toast
     @Published var triggerMode: SidebarTriggerMode = .hotZoneAndHotKey
     
+    // Preview
+    @Published var previewEnabled: Bool = true
+    @Published var previewMaxWidth: CGFloat = 480
+    
     // Sidebar appearance
     @Published var sidebarColorHex: String?  // nil = 系统默认毛玻璃
     @Published var sidebarOpacity: Double = 0.85
@@ -57,6 +61,8 @@ class SettingsStore: ObservableObject {
             "fullscreenDropAction": fullscreenDropAction.rawValue,
             "triggerMode": triggerMode.rawValue,
             "sidebarOpacity": sidebarOpacity,
+            "previewEnabled": previewEnabled,
+            "previewMaxWidth": previewMaxWidth,
         ]
         if let hex = sidebarColorHex {
             settings["sidebarColorHex"] = hex
@@ -98,6 +104,8 @@ class SettingsStore: ObservableObject {
            let mode = SidebarTriggerMode(rawValue: val) { triggerMode = mode }
         if let val = settings["sidebarColorHex"] as? String { sidebarColorHex = val }
         if let val = settings["sidebarOpacity"] as? Double { sidebarOpacity = val }
+        if let val = settings["previewEnabled"] as? Bool { previewEnabled = val }
+        if let val = settings["previewMaxWidth"] as? CGFloat { previewMaxWidth = val }
     }
     
     // MARK: - HotKey Helper

@@ -124,6 +124,29 @@ class SidebarPanel: NSPanel {
         })
     }
     
+    func showAtPosition(on screen: NSScreen, mousePosition: NSPoint, width: CGFloat = AppConstants.defaultSidebarWidth) {
+        guard !isAnimating else { return }
+        
+        let height = screen.visibleFrame.height
+        let x = max(screen.frame.minX, min(mousePosition.x - width / 2, screen.frame.maxX - width))
+        let y = screen.visibleFrame.minY
+        let targetFrame = NSRect(x: x, y: y, width: width, height: height)
+        
+        alphaValue = 0
+        setFrame(targetFrame, display: true)
+        orderFrontRegardless()
+        
+        isAnimating = true
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().alphaValue = 1
+        }, completionHandler: { [weak self] in
+            self?.isAnimating = false
+            self?.startMouseMonitoring()
+        })
+    }
+    
     func dismiss() {
         guard !isAnimating, isVisible else { return }
         

@@ -4,6 +4,7 @@ struct WindowRow: View {
     let window: WindowItem
     let spaceIndex: Int
     @ObservedObject var viewModel: SidebarViewModel
+    @ObservedObject var settingsStore: SettingsStore
     var onDismiss: (() -> Void)?
     @State private var isHovered = false
     @State private var isRenaming = false
@@ -19,7 +20,7 @@ struct WindowRow: View {
             // Active indicator
             if window.hasFocus {
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.accentColor)
+                    .fill(DesignTokens.Colors.activeIndicator)
                     .frame(width: AppConstants.activeIndicatorWidth, height: 20)
             } else {
                 Color.clear
@@ -41,8 +42,8 @@ struct WindowRow: View {
                 
                 if !window.title.isEmpty {
                     Text(window.title)
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: DesignTokens.Font.captionSize))
+                        .foregroundColor(DesignTokens.Colors.secondaryText)
                         .lineLimit(1)
                 }
             }
@@ -56,21 +57,21 @@ struct WindowRow: View {
                 }
             }
             
-            // 预览按钮（hover 时显示）
-            if window.thumbnail != nil && isHovered {
+            // 预览按钮（hover 或预览打开时显示）
+            if settingsStore.previewEnabled && window.thumbnail != nil && (isHovered || showPreview) {
                 Button(action: { showPreview.toggle() }) {
-                    Image(systemName: "eye")
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
+                    Image(systemName: showPreview ? "eye.fill" : "eye")
+                        .font(.system(size: 10))
+                        .foregroundColor(showPreview ? DesignTokens.Colors.activeIndicator : DesignTokens.Colors.secondaryText)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 4)
+        .padding(.horizontal, DesignTokens.Spacing.lg)
+        .padding(.vertical, DesignTokens.Spacing.xs)
         .background(
-            RoundedRectangle(cornerRadius: 4)
-                .fill(isHovered ? Color.primary.opacity(0.05) : Color.clear)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
+                .fill(isHovered ? DesignTokens.Colors.hoverBackground : Color.clear)
         )
         .contentShape(Rectangle())
         .onHover { hovering in
@@ -84,8 +85,8 @@ struct WindowRow: View {
                 Image(nsImage: thumbnail)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: 320, maxHeight: 200)
-                    .padding(4)
+                    .frame(maxWidth: settingsStore.previewMaxWidth, maxHeight: settingsStore.previewMaxWidth * 0.625)
+                    .padding(6)
             }
         }
         .onTapGesture {
@@ -161,11 +162,11 @@ private struct CloseButton: View {
         Button(action: action) {
             Image(systemName: "xmark")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.secondaryText)
                 .frame(width: 16, height: 16)
                 .background(
                     Circle()
-                        .fill(isHovered ? Color.primary.opacity(0.15) : Color.clear)
+                        .fill(isHovered ? DesignTokens.Colors.closeButtonHover : Color.clear)
                 )
         }
         .buttonStyle(.plain)

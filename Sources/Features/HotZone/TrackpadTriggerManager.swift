@@ -1,103 +1,151 @@
 import Cocoa
 
+private func trackpadDebugReport(
+    hypothesisId: String,
+    location: String,
+    msg: String,
+    data: [String: Any] = [:]
+) {
+    // #region debug-point B:trackpad-report
+    guard let url = URL(string: "http://127.0.0.1:7777/event") else { return }
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    let body: [String: Any] = [
+        "sessionId": "trackpad-trigger-chain",
+        "runId": "pre-fix",
+        "hypothesisId": hypothesisId,
+        "location": location,
+        "msg": "[DEBUG] \(msg)",
+        "data": data,
+        "ts": Int(Date().timeIntervalSince1970 * 1000)
+    ]
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+    URLSession.shared.dataTask(with: request).resume()
+    // #endregion
+}
+
 class TrackpadTriggerManager {
     
-    private var eventTap: CFMachPort?
-    private var runLoopSource: CFRunLoopSource?
     var isEnabled = false
     var onTrigger: ((NSPoint, NSScreen) -> Void)?
     
-    private var lastTriggerTime: Date = .distantPast
+    private var mouseMonitor: Any?
     private var isStarted = false
+    
+    private var lastTriggerTime: Date = .distantPast
+    // 触发后冷却时间
+    private let cooldown: TimeInterval = 0.6
     
     func start() {
         guard !isStarted else { return }
         
-        // 不弹权限提示，静默检查
-        let trusted = AXIsProcessTrustedWithOptions(nil)
-        
-        if !trusted {
-            // 弹权限提示
-            AXIsProcessTrustedWithOptions([
-                kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true
-            ] as CFDictionary)
-            NSLog("[TrackpadTrigger] Accessibility permission not granted, start failed")
-            return
+        // #region debug-point B:trackpad-start
+        trackpadDebugReport(
+            hypothesisId: "B",
+            location: "TrackpadTriggerManager.start",
+            msg: "right mouse monitor starting",
+            data: ["isEnabled": isEnabled]
+        )
+        // #endregion
+        mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.rightMouseDown]) { [weak self] event in
+            self?.handleRightMouseEvent(event)
         }
         
-        let eventMask: CGEventMask = (1 << 29)  // gesture events
-        
-        guard let tap = CGEvent.tapCreate(
-            tap: .cghidEventTap,
-            place: .headInsertEventTap,
-            options: .listenOnly,
-            eventsOfInterest: eventMask,
-            callback: { (proxy, type, event, refcon) -> Unmanaged<CGEvent>? in
-                guard let refcon = refcon else { return Unmanaged.passRetained(event) }
-                let manager = Unmanaged<TrackpadTriggerManager>.fromOpaque(refcon).takeUnretainedValue()
-                manager.handleCGEvent(event)
-                return Unmanaged.passRetained(event)
-            },
-            userInfo: Unmanaged.passUnretained(self).toOpaque()
-        ) else {
-            NSLog("[TrackpadTrigger] Failed to create event tap")
-            return
-        }
-        
-        eventTap = tap
-        runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
         isStarted = true
-        NSLog("[TrackpadTrigger] Event tap started successfully")
+        // #region debug-point B:trackpad-started
+        trackpadDebugReport(
+            hypothesisId: "B",
+            location: "TrackpadTriggerManager.start",
+            msg: "right mouse monitor started",
+            data: ["isEnabled": isEnabled]
+        )
+        // #endregion
     }
     
     func stop() {
-        if let tap = eventTap {
-            CGEvent.tapEnable(tap: tap, enable: false)
-            if let source = runLoopSource {
-                CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
-            }
+        if let monitor = mouseMonitor {
+            NSEvent.removeMonitor(monitor)
+            mouseMonitor = nil
         }
-        eventTap = nil
-        runLoopSource = nil
         isStarted = false
+        // #region debug-point A:trackpad-stop
+        trackpadDebugReport(
+            hypothesisId: "A",
+            location: "TrackpadTriggerManager.stop",
+            msg: "right mouse monitor stopped",
+            data: ["isEnabled": isEnabled]
+        )
+        // #endregion
     }
     
-    private func handleCGEvent(_ event: CGEvent) {
+    private func handleRightMouseEvent(_ event: NSEvent) {
         guard isEnabled else { return }
-        
-        let touches = event.getIntegerValueField(CGEventField(rawValue: 135)!)
-        let phase = event.getIntegerValueField(CGEventField(rawValue: 132)!)
-        
-        // 方案 A: 私有字段可用
-        if touches == 3 && phase == 1 {
+
+        // #region debug-point C:gesture-event-received
+        trackpadDebugReport(
+            hypothesisId: "C",
+            location: "TrackpadTriggerManager.handleRightMouseEvent",
+            msg: "right mouse event received",
+            data: [
+                "clickCount": event.clickCount,
+                "buttonNumber": event.buttonNumber,
+                "locationX": event.locationInWindow.x,
+                "locationY": event.locationInWindow.y
+            ]
+        )
+        // #endregion
+
+        if event.clickCount >= 2 {
+            // #region debug-point D:tap-detected
+            trackpadDebugReport(
+                hypothesisId: "D",
+                location: "TrackpadTriggerManager.handleRightMouseEvent",
+                msg: "double secondary click detected",
+                data: ["clickCount": event.clickCount]
+            )
+            // #endregion
             triggerIfReady()
-            return
-        }
-        
-        // 方案 B: NSEvent fallback
-        if touches == 0 {
-            if let nsEvent = NSEvent(cgEvent: event) {
-                let allTouches = nsEvent.allTouches()
-                if allTouches.count == 3 {
-                    let began = allTouches.filter { $0.phase == .began }
-                    if began.count >= 1 {
-                        triggerIfReady()
-                    }
-                }
-            }
         }
     }
     
     private func triggerIfReady() {
         let now = Date()
-        guard now.timeIntervalSince(lastTriggerTime) > 0.5 else { return }
+        
+        guard now.timeIntervalSince(lastTriggerTime) > cooldown else {
+            // #region debug-point D:cooldown
+            trackpadDebugReport(
+                hypothesisId: "D",
+                location: "TrackpadTriggerManager.triggerIfReady",
+                msg: "trigger ignored by cooldown"
+            )
+            // #endregion
+            return
+        }
+
         lastTriggerTime = now
+        // #region debug-point E:double-tap-triggered
+        trackpadDebugReport(
+            hypothesisId: "E",
+            location: "TrackpadTriggerManager.triggerIfReady",
+            msg: "double secondary click triggered"
+        )
+        // #endregion
         
         DispatchQueue.main.async { [weak self] in
             let mouseLocation = NSEvent.mouseLocation
             guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouseLocation) }) else { return }
+            // #region debug-point E:on-trigger-dispatch
+            trackpadDebugReport(
+                hypothesisId: "E",
+                location: "TrackpadTriggerManager.triggerIfReady.dispatch",
+                msg: "dispatching onTrigger",
+                data: [
+                    "mouseX": mouseLocation.x,
+                    "mouseY": mouseLocation.y
+                ]
+            )
+            // #endregion
             self?.onTrigger?(mouseLocation, screen)
         }
     }

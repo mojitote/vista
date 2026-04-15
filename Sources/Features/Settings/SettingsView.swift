@@ -33,10 +33,24 @@ struct SettingsView: View {
                 Toggle("Show Thumbnails", isOn: $store.showThumbnails)
             }
             
+            Section("Preview") {
+                Toggle("Enable Preview", isOn: $store.previewEnabled)
+                
+                if store.previewEnabled {
+                    HStack {
+                        Text("Preview Size")
+                        Slider(value: $store.previewMaxWidth, in: 240...800, step: 40)
+                        Text("\(Int(store.previewMaxWidth))px")
+                            .monospacedDigit()
+                            .frame(width: 50)
+                    }
+                }
+            }
+            
             Section("Trigger Mode") {
                 Picker("Sidebar Trigger", selection: $store.triggerMode) {
                     Text("Hot Zone + Shortcut").tag(SidebarTriggerMode.hotZoneAndHotKey)
-                    Text("Three-Finger Tap (at cursor)").tag(SidebarTriggerMode.threeFingerTap)
+                    Text("Two-Finger Double-Tap (at cursor)").tag(SidebarTriggerMode.threeFingerTap)
                 }
                 .pickerStyle(.radioGroup)
             }
@@ -95,7 +109,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 400, height: 550)
+        .frame(width: 400, height: 600)
         .onReceive(store.objectWillChange.debounce(for: .milliseconds(500), scheduler: RunLoop.main)) { _ in
             store.save()
         }

@@ -3,7 +3,7 @@ import Combine
 
 // MARK: - View Data Models
 
-struct WindowItem: Identifiable {
+struct WindowItem: Identifiable, Equatable {
     let id: Int
     let pid: Int
     let app: String
@@ -12,9 +12,17 @@ struct WindowItem: Identifiable {
     let isMinimized: Bool
     var appIcon: NSImage?
     var thumbnail: NSImage?
+    
+    static func == (lhs: WindowItem, rhs: WindowItem) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.app == rhs.app &&
+        lhs.title == rhs.title &&
+        lhs.hasFocus == rhs.hasFocus &&
+        lhs.isMinimized == rhs.isMinimized
+    }
 }
 
-struct SpaceItem: Identifiable {
+struct SpaceItem: Identifiable, Equatable {
     let id: Int64
     let index: Int
     let label: String
@@ -31,9 +39,19 @@ struct SpaceItem: Identifiable {
     }
     
     var isExpanded: Bool = true
+    
+    static func == (lhs: SpaceItem, rhs: SpaceItem) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.index == rhs.index &&
+        lhs.label == rhs.label &&
+        lhs.hasFocus == rhs.hasFocus &&
+        lhs.isVisible == rhs.isVisible &&
+        lhs.isNativeFullscreen == rhs.isNativeFullscreen &&
+        lhs.windows == rhs.windows
+    }
 }
 
-struct DisplayGroup: Identifiable {
+struct DisplayGroup: Identifiable, Equatable {
     let id: Int
     let index: Int
     let label: String
@@ -45,6 +63,13 @@ struct DisplayGroup: Identifiable {
             return label
         }
         return "Display \(index)"
+    }
+    
+    static func == (lhs: DisplayGroup, rhs: DisplayGroup) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.index == rhs.index &&
+        lhs.hasFocus == rhs.hasFocus &&
+        lhs.spaces == rhs.spaces
     }
 }
 
@@ -108,7 +133,9 @@ class SidebarViewModel: ObservableObject {
                 let groups = self.buildHierarchy(displays: displays, spaces: spaces, windows: windows, thumbnails: thumbnails)
                 
                 DispatchQueue.main.async {
-                    self.displayGroups = groups
+                    if self.displayGroups != groups {
+                        self.displayGroups = groups
+                    }
                     self.isLoading = false
                     self.isYabaiRunning = true
                 }

@@ -4,6 +4,7 @@ struct SidebarView: View {
     @ObservedObject var viewModel: SidebarViewModel
     @ObservedObject var sceneStore: SceneStore
     @ObservedObject var spaceNameStore: SpaceNameStore
+    @ObservedObject var settingsStore: SettingsStore
     var onDismiss: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     
@@ -12,20 +13,22 @@ struct SidebarView: View {
             // Title bar
             HStack {
                 Text(AppConstants.appName)
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                    .font(.system(size: DesignTokens.Font.titleSize, weight: DesignTokens.Font.titleWeight))
+                    .foregroundColor(DesignTokens.Colors.primaryText)
                 Spacer()
                 Button(action: { onOpenSettings?() }) {
                     Image(systemName: "gear")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 13))
+                        .foregroundColor(DesignTokens.Colors.secondaryText)
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, DesignTokens.Spacing.xl)
+            .padding(.vertical, DesignTokens.Spacing.lg)
             
-            Divider()
+            Rectangle()
+                .fill(DesignTokens.Colors.separator)
+                .frame(height: 1)
             
             // Content
             if !viewModel.isYabaiRunning {
@@ -41,11 +44,12 @@ struct SidebarView: View {
                                 group: group,
                                 viewModel: viewModel,
                                 spaceNameStore: spaceNameStore,
+                                settingsStore: settingsStore,
                                 onDismiss: onDismiss
                             )
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, DesignTokens.Spacing.md)
                 }
                 
                 // Scene 区域（底部固定）
@@ -58,11 +62,12 @@ struct SidebarView: View {
                 Text(toast)
                     .font(.system(size: 11))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
+                    .padding(.vertical, DesignTokens.Spacing.sm)
                     .background(
                         Capsule()
-                            .fill(Color.black.opacity(0.75))
+                            .fill(DesignTokens.Colors.toastBackground)
+                            .shadow(color: DesignTokens.Shadow.toast, radius: DesignTokens.Shadow.toastRadius)
                     )
                     .padding(.bottom, 60)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -75,12 +80,12 @@ struct SidebarView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 40))
-                .foregroundColor(.orange)
+                .foregroundColor(DesignTokens.Colors.fullscreenBadge)
             Text("yabai is not running")
                 .font(.headline)
             Text("Please install and start yabai to use Vista.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.secondaryText)
                 .multilineTextAlignment(.center)
             Link("Install yabai", destination: URL(string: "https://github.com/koekeishiya/yabai")!)
                 .font(.caption)

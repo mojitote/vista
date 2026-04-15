@@ -12,7 +12,7 @@ struct SceneRow: View {
         HStack(spacing: 8) {
             Image(systemName: scene.icon)
                 .font(.system(size: 14))
-                .foregroundColor(isActive ? .accentColor : .secondary)
+                .foregroundColor(isActive ? DesignTokens.Colors.activeIndicator : DesignTokens.Colors.secondaryText)
                 .frame(width: 20)
             
             Text(scene.name)
@@ -23,12 +23,12 @@ struct SceneRow: View {
             
             if isActive {
                 Circle()
-                    .fill(Color.accentColor)
+                    .fill(DesignTokens.Colors.activeIndicator)
                     .frame(width: 6, height: 6)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, DesignTokens.Spacing.lg)
+        .padding(.vertical, DesignTokens.Spacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 4)
                 .fill(isActive ? Color.accentColor.opacity(0.1) : (isHovered ? Color.primary.opacity(0.05) : Color.clear))

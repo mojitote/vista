@@ -4,6 +4,7 @@ struct SpaceRow: View {
     let space: SpaceItem
     @ObservedObject var viewModel: SidebarViewModel
     @ObservedObject var spaceNameStore: SpaceNameStore
+    @ObservedObject var settingsStore: SettingsStore
     var onDismiss: (() -> Void)?
     @State private var isHovered = false
     @State private var isDropTargeted = false
@@ -17,7 +18,7 @@ struct SpaceRow: View {
                 // Active indicator
                 if space.hasFocus {
                     RoundedRectangle(cornerRadius: 1.5)
-                        .fill(Color.accentColor)
+                        .fill(DesignTokens.Colors.activeIndicator)
                         .frame(width: AppConstants.activeIndicatorWidth, height: 16)
                 } else {
                     Color.clear
@@ -26,37 +27,37 @@ struct SpaceRow: View {
                 
                 Image(systemName: space.isExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.subtleText)
                     .frame(width: 12)
                 
                 Text(spaceNameStore.name(forSpaceIndex: space.index) ?? space.displayName)
                     .font(.system(size: 12, weight: space.hasFocus ? .semibold : .medium))
-                    .foregroundColor(space.hasFocus ? .primary : .secondary)
+                    .foregroundColor(space.hasFocus ? DesignTokens.Colors.primaryText : DesignTokens.Colors.secondaryText)
                 
                 if space.isVisible {
                     Circle()
-                        .fill(Color.green.opacity(0.7))
+                        .fill(DesignTokens.Colors.visibleDot)
                         .frame(width: 5, height: 5)
                 }
                 
                 if space.isNativeFullscreen {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                         .font(.system(size: 8))
-                        .foregroundColor(.orange.opacity(0.8))
+                        .foregroundColor(DesignTokens.Colors.fullscreenBadge)
                         .help("全屏模式")
                 }
                 
                 Spacer()
                 
                 Text("\(space.windows.count)")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: DesignTokens.Font.badgeSize))
+                    .foregroundColor(DesignTokens.Colors.subtleText)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.horizontal, DesignTokens.Spacing.lg)
+            .padding(.vertical, DesignTokens.Spacing.sm)
             .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isDropTargeted ? Color.accentColor.opacity(0.15) : (isHovered ? Color.primary.opacity(0.05) : Color.clear))
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
+                    .fill(isDropTargeted ? DesignTokens.Colors.dropTargetBackground : (isHovered ? DesignTokens.Colors.hoverBackground : Color.clear))
             )
             .contentShape(Rectangle())
             .onHover { hovering in
@@ -123,6 +124,7 @@ struct SpaceRow: View {
                         window: window,
                         spaceIndex: space.index,
                         viewModel: viewModel,
+                        settingsStore: settingsStore,
                         onDismiss: onDismiss
                     )
                 }
