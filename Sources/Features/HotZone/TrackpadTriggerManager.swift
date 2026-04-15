@@ -38,6 +38,7 @@ class TrackpadTriggerManager {
     
     // 第一击暂存
     private var pendingFirstClick: CGEvent?
+    private var pendingFirstClickUp: CGEvent?  // 配对的 rightMouseUp
     private var pendingFirstClickTime: CFAbsoluteTime = 0
     private var pendingFirstClickLocation: NSPoint = .zero
     private var releaseTimer: DispatchSourceTimer?
@@ -46,7 +47,10 @@ class TrackpadTriggerManager {
     private let cooldown: TimeInterval = 0.6
     private let doubleTapWindow: TimeInterval = 0.3   // 两次右键间最大间隔
     private let maxDistance: CGFloat = 50              // 两次右键间最大位移
-    private let releaseDelay: TimeInterval = 0.32      // 等第二击的超时（比 doubleTapWindow 略长）
+    
+    private var releaseDelay: TimeInterval {
+        SettingsStore.shared.doubleTapDelay
+    }
     
     func start() {
         guard !isStarted else { return }
@@ -146,7 +150,16 @@ class TrackpadTriggerManager {
             return Unmanaged.passRetained(event)
         }
         
-        // 只处理 rightMouseDown，rightMouseUp 直接放行
+        // 只处理 rightMouseDown 和 rightMouseUp
+        // rightMouseUp：如果有暂存的 down，也暂存 up（保持配对）；否则放行
+        if type == .rightMouseUp {
+            if pendingFirstClick != nil {
+                pendingFirstClickUp = event.copy()
+                return nil  // 吞掉，等补发时一起发
+            }
+            return Unmanaged.passRetained(event)
+        }
+        
         guard type == .rightMouseDown else {
             return Unmanaged.passRetained(event)
         }
@@ -191,6 +204,7 @@ class TrackpadTriggerManager {
                 // 双击成功！吞掉两下，触发 Vista
                 cancelReleaseTimer()
                 pendingFirstClick = nil
+                pendingFirstClickUp = nil
                 
                 // #region debug-point E:double-tap-confirmed
                 trackpadDebugReport(
@@ -249,13 +263,16 @@ class TrackpadTriggerManager {
     }
     
     private func releasePendingClick() {
-        guard let event = pendingFirstClick else { return }
+        guard let downEvent = pendingFirstClick else { return }
+        let upEvent = pendingFirstClickUp
         pendingFirstClick = nil
-        // 禁用 tap → 补发 → 延迟重新启用，避免补发事件被自己拦截
+        pendingFirstClickUp = nil
+        // 禁用 tap → 补发 down + up → 延迟重新启用，避免补发事件被自己拦截
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: false)
         }
-        event.post(tap: .cgSessionEventTap)
+        downEvent.post(tap: .cgSessionEventTap)
+        upEvent?.post(tap: .cgSessionEventTap)
         // 延迟重新启用 tap，给补发事件足够的时间通过管线
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
             guard let self = self, let tap = self.eventTap, self.isStarted else { return }

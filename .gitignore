@@ -1,0 +1,7 @@
+# Debug logs
+.dbg/
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/

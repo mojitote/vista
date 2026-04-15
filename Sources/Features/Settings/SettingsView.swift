@@ -53,6 +53,16 @@ struct SettingsView: View {
                     Text("Two-Finger Double-Tap (at cursor)").tag(SidebarTriggerMode.threeFingerTap)
                 }
                 .pickerStyle(.radioGroup)
+                
+                if store.triggerMode == .threeFingerTap {
+                    HStack {
+                        Text("Double-Tap Delay")
+                        Slider(value: $store.doubleTapDelay, in: 0.10...0.50, step: 0.02)
+                        Text("\(Int(store.doubleTapDelay * 1000))ms")
+                            .monospacedDigit()
+                            .frame(width: 50)
+                    }
+                }
             }
             
             Section("Hot Zone") {

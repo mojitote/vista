@@ -25,6 +25,7 @@ class SettingsStore: ObservableObject {
     @Published var launchAtLogin: Bool = false
     @Published var fullscreenDropAction: FullscreenDropAction = .toast
     @Published var triggerMode: SidebarTriggerMode = .hotZoneAndHotKey
+    @Published var doubleTapDelay: TimeInterval = 0.20  // 双击等待超时（秒）
     
     // Preview
     @Published var previewEnabled: Bool = true
@@ -60,6 +61,7 @@ class SettingsStore: ObservableObject {
             "launchAtLogin": launchAtLogin,
             "fullscreenDropAction": fullscreenDropAction.rawValue,
             "triggerMode": triggerMode.rawValue,
+            "doubleTapDelay": doubleTapDelay,
             "sidebarOpacity": sidebarOpacity,
             "previewEnabled": previewEnabled,
             "previewMaxWidth": previewMaxWidth,
@@ -102,6 +104,7 @@ class SettingsStore: ObservableObject {
            let action = FullscreenDropAction(rawValue: val) { fullscreenDropAction = action }
         if let val = settings["triggerMode"] as? String,
            let mode = SidebarTriggerMode(rawValue: val) { triggerMode = mode }
+        if let val = settings["doubleTapDelay"] as? TimeInterval { doubleTapDelay = val }
         if let val = settings["sidebarColorHex"] as? String { sidebarColorHex = val }
         if let val = settings["sidebarOpacity"] as? Double { sidebarOpacity = val }
         if let val = settings["previewEnabled"] as? Bool { previewEnabled = val }
