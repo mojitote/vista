@@ -1,4 +1,5 @@
 import SwiftUI
+import Carbon
 
 struct SceneEditorView: View {
     @ObservedObject var sceneStore: SceneStore
@@ -9,6 +10,9 @@ struct SceneEditorView: View {
     @State private var selectedSpaceUUIDs: Set<String> = []
     @State private var availableSpaces: [(uuid: String, index: Int)] = []
     @State private var selectedColorHex: String = "#5E9EFF"
+    @State private var hotkeyKeyCode: UInt32?
+    @State private var hotkeyModifiers: UInt32?
+    @State private var isRecordingHotkey = false
     
     @Environment(\.dismiss) private var dismiss
     
@@ -138,6 +142,72 @@ struct SceneEditorView: View {
                 }
             }
             
+            // 快捷键绑定
+            VStack(alignment: .leading, spacing: 4) {
+                Text("快捷键")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                
+                HStack {
+                    if isRecordingHotkey {
+                        Text("按下快捷键...")
+                            .font(.system(size: 12))
+                            .foregroundColor(.accentColor)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.accentColor, lineWidth: 1)
+                            )
+                    } else if let keyCode = hotkeyKeyCode, let mods = hotkeyModifiers {
+                        Text(hotkeyDisplayString(keyCode: keyCode, modifiers: mods))
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.primary.opacity(0.05))
+                            )
+                    } else {
+                        Text("未设置")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.primary.opacity(0.05))
+                            )
+                    }
+                    
+                    Button(isRecordingHotkey ? "取消" : "录制") {
+                        isRecordingHotkey.toggle()
+                    }
+                    .font(.system(size: 11))
+                    
+                    if hotkeyKeyCode != nil {
+                        Button("清除") {
+                            hotkeyKeyCode = nil
+                            hotkeyModifiers = nil
+                            isRecordingHotkey = false
+                        }
+                        .font(.system(size: 11))
+                    }
+                }
+            }
+            .background(
+                // 隐形按键监听器
+                HotkeyRecorderView(
+                    isRecording: $isRecordingHotkey,
+                    keyCode: $hotkeyKeyCode,
+                    modifiers: $hotkeyModifiers
+                )
+                .frame(width: 0, height: 0)
+            )
+            
             HStack {
                 Button("取消") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -160,6 +230,8 @@ struct SceneEditorView: View {
                 icon = scene.icon
                 selectedSpaceUUIDs = Set(scene.spaceUUIDs)
                 selectedColorHex = scene.colorHex
+                hotkeyKeyCode = scene.hotkeyKeyCode
+                hotkeyModifiers = scene.hotkeyModifiers
             }
             loadAvailableSpaces()
         }
@@ -174,13 +246,17 @@ struct SceneEditorView: View {
             scene.icon = icon
             scene.spaceUUIDs = Array(selectedSpaceUUIDs)
             scene.colorHex = selectedColorHex
+            scene.hotkeyKeyCode = hotkeyKeyCode
+            scene.hotkeyModifiers = hotkeyModifiers
             sceneStore.updateScene(scene)
         } else {
             let scene = VistaScene(
                 name: trimmedName,
                 icon: icon,
                 spaceUUIDs: Array(selectedSpaceUUIDs),
-                colorHex: selectedColorHex
+                colorHex: selectedColorHex,
+                hotkeyKeyCode: hotkeyKeyCode,
+                hotkeyModifiers: hotkeyModifiers
             )
             sceneStore.addScene(scene)
         }
@@ -200,5 +276,97 @@ struct SceneEditorView: View {
         sceneStore.scenes.first(where: {
             $0.id != editingScene?.id && $0.spaceUUIDs.contains(uuid)
         })
+    }
+    
+    private func hotkeyDisplayString(keyCode: UInt32, modifiers: UInt32) -> String {
+        let mods = NSEvent.ModifierFlags(carbonFlags: modifiers)
+        var parts: [String] = []
+        if mods.contains(.control) { parts.append("⌃") }
+        if mods.contains(.option) { parts.append("⌥") }
+        if mods.contains(.shift) { parts.append("⇧") }
+        if mods.contains(.command) { parts.append("⌘") }
+        
+        let keyName = carbonKeyCodeToString(keyCode)
+        parts.append(keyName)
+        return parts.joined()
+    }
+    
+    private func carbonKeyCodeToString(_ keyCode: UInt32) -> String {
+        let keyMap: [UInt32: String] = [
+            0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X", 8: "C", 9: "V",
+            11: "B", 12: "Q", 13: "W", 14: "E", 15: "R", 16: "Y", 17: "T", 18: "1", 19: "2",
+            20: "3", 21: "4", 22: "6", 23: "5", 24: "=", 25: "9", 26: "7", 27: "-", 28: "8",
+            29: "0", 31: "O", 32: "U", 34: "I", 35: "P", 37: "L", 38: "J", 40: "K", 45: "N",
+            46: "M", 30: "]", 33: "[", 39: "'", 41: ";", 42: "\\", 43: ",", 44: "/", 47: ".",
+            48: "Tab", 49: "Space", 50: "`", 51: "Del", 53: "Esc",
+            96: "F5", 97: "F6", 98: "F7", 99: "F3", 100: "F8", 101: "F9", 103: "F11",
+            105: "F13", 107: "F14", 109: "F10", 111: "F12", 113: "F15",
+            118: "F4", 120: "F2", 122: "F1",
+            123: "←", 124: "→", 125: "↓", 126: "↑",
+            36: "↩", 76: "⌤"
+        ]
+        return keyMap[keyCode] ?? "Key\(keyCode)"
+    }
+}
+
+// MARK: - Hotkey Recorder NSView
+
+struct HotkeyRecorderView: NSViewRepresentable {
+    @Binding var isRecording: Bool
+    @Binding var keyCode: UInt32?
+    @Binding var modifiers: UInt32?
+    
+    func makeNSView(context: Context) -> HotkeyRecorderNSView {
+        let view = HotkeyRecorderNSView()
+        view.onKeyRecorded = { code, mods in
+            DispatchQueue.main.async {
+                self.keyCode = code
+                self.modifiers = mods
+                self.isRecording = false
+            }
+        }
+        return view
+    }
+    
+    func updateNSView(_ nsView: HotkeyRecorderNSView, context: Context) {
+        nsView.isRecording = isRecording
+        if isRecording {
+            nsView.window?.makeFirstResponder(nsView)
+        }
+    }
+}
+
+class HotkeyRecorderNSView: NSView {
+    var isRecording = false
+    var onKeyRecorded: ((UInt32, UInt32) -> Void)?
+    
+    override var acceptsFirstResponder: Bool { true }
+    
+    override func keyDown(with event: NSEvent) {
+        guard isRecording else { super.keyDown(with: event); return }
+        
+        let mods = event.modifierFlags.intersection([.control, .option, .shift, .command])
+        guard !mods.isEmpty else { return }
+        
+        onKeyRecorded?(UInt32(event.keyCode), mods.carbonFlags)
+    }
+}
+
+extension NSEvent.ModifierFlags {
+    init(carbonFlags: UInt32) {
+        self.init()
+        if carbonFlags & UInt32(cmdKey) != 0 { insert(.command) }
+        if carbonFlags & UInt32(shiftKey) != 0 { insert(.shift) }
+        if carbonFlags & UInt32(optionKey) != 0 { insert(.option) }
+        if carbonFlags & UInt32(controlKey) != 0 { insert(.control) }
+    }
+    
+    var carbonFlags: UInt32 {
+        var flags: UInt32 = 0
+        if contains(.command) { flags |= UInt32(cmdKey) }
+        if contains(.shift) { flags |= UInt32(shiftKey) }
+        if contains(.option) { flags |= UInt32(optionKey) }
+        if contains(.control) { flags |= UInt32(controlKey) }
+        return flags
     }
 }

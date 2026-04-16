@@ -3,6 +3,7 @@ import SwiftUI
 struct SceneBar: View {
     @ObservedObject var sceneStore: SceneStore
     var onOpenSettings: (() -> Void)?
+    var onGotoScene: ((VistaScene) -> Void)?
     @State private var showEditor = false
     @State private var editingScene: VistaScene?
     
@@ -27,6 +28,14 @@ struct SceneBar: View {
                         .lineLimit(1)
                     
                     Spacer()
+                    
+                    Button(action: { onGotoScene?(scene) }) {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                    }
+                    .buttonStyle(.plain)
+                    .help("跳转到此场景的所有 Space")
                 }
                 .padding(.horizontal, DesignTokens.Spacing.xl)
                 .padding(.vertical, DesignTokens.Spacing.sm)

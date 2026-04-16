@@ -74,6 +74,7 @@ struct SidebarView: View {
                             ForEach(viewModel.filteredDisplayGroups) { group in
                                 DisplaySection(
                                     group: group,
+                                    allGroups: viewModel.displayGroups,
                                     viewModel: viewModel,
                                     spaceNameStore: spaceNameStore,
                                     settingsStore: settingsStore,
@@ -85,7 +86,7 @@ struct SidebarView: View {
                         .padding(.vertical, DesignTokens.Spacing.md)
                     }
                     
-                    SceneBar(sceneStore: sceneStore, onOpenSettings: onOpenSettings)
+                    SceneBar(sceneStore: sceneStore, onOpenSettings: onOpenSettings, onGotoScene: { scene in viewModel.gotoScene(scene) })
                 }
             case .popup:
                 VStack(spacing: 0) {
@@ -94,6 +95,7 @@ struct SidebarView: View {
                             ForEach(viewModel.filteredDisplayGroups) { group in
                                 DisplaySection(
                                     group: group,
+                                    allGroups: viewModel.displayGroups,
                                     viewModel: viewModel,
                                     spaceNameStore: spaceNameStore,
                                     settingsStore: settingsStore,
@@ -106,7 +108,7 @@ struct SidebarView: View {
                     }
                     .frame(maxHeight: presentationStore.popupContentMaxHeight)
                     
-                    SceneBar(sceneStore: sceneStore, onOpenSettings: onOpenSettings)
+                    SceneBar(sceneStore: sceneStore, onOpenSettings: onOpenSettings, onGotoScene: { scene in viewModel.gotoScene(scene) })
                 }
             }
         }

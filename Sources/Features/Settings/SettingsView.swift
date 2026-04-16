@@ -29,8 +29,6 @@ struct SettingsView: View {
                         .monospacedDigit()
                         .frame(width: 50)
                 }
-                
-                Toggle("Show Thumbnails", isOn: $store.showThumbnails)
             }
             
             Section("Preview") {

@@ -133,6 +133,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let keyCombo = settingsStore.sidebarKeyCombo ?? KeyCombo(key: .tab, modifiers: .option)
         hotKeysManager.updateSidebarHotKey(keyCombo: keyCombo)
         
+        // Scene 快捷键
+        hotKeysManager.onGotoScene = { [weak self] scene in
+            self?.sidebarViewModel.gotoScene(scene)
+        }
+        hotKeysManager.updateSceneHotKeys(scenes: sceneStore.scenes)
+        
+        // 监听 sceneStore 变化，更新快捷键
+        sceneStore.$scenes
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] scenes in
+                self?.hotKeysManager.updateSceneHotKeys(scenes: scenes)
+            }
+            .store(in: &cancellables)
+        
         // Initialize Menu Bar
         menuBarManager = MenuBarManager()
         menuBarManager.onToggleSidebar = { [weak self] in
@@ -234,7 +249,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         sidebarPanel.show(on: screen, width: settingsStore.sidebarWidth)
         applySidebarColor()
-        sidebarViewModel.loadData(withThumbnails: settingsStore.showThumbnails)
+        sidebarViewModel.loadData()
         sidebarViewModel.startPolling()
     }
     
@@ -279,7 +294,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             height: height
         )
         applySidebarColor()
-        sidebarViewModel.loadData(withThumbnails: settingsStore.showThumbnails)
+        sidebarViewModel.loadData()
         sidebarViewModel.startPolling()
     }
     

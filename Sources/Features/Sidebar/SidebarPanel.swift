@@ -38,6 +38,8 @@ class SidebarPanel: NSPanel {
         contentView = visualEffect
     }
     
+    override var canBecomeKey: Bool { true }
+    
     // MARK: - Sidebar Color
     
     func updateSidebarColor(color: NSColor?, opacity: Double) {

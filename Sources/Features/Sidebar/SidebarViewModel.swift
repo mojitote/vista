@@ -11,7 +11,6 @@ struct WindowItem: Identifiable, Equatable {
     let hasFocus: Bool
     let isMinimized: Bool
     var appIcon: NSImage?
-    var thumbnail: NSImage?
     
     static func == (lhs: WindowItem, rhs: WindowItem) -> Bool {
         lhs.id == rhs.id &&
@@ -55,9 +54,11 @@ struct SpaceItem: Identifiable, Equatable {
 
 struct DisplayGroup: Identifiable, Equatable {
     let id: Int
+    let uuid: String
     let index: Int
     let label: String
     let hasFocus: Bool
+    let frame: YabaiFrame
     var spaces: [SpaceItem]
     
     var displayName: String {
@@ -65,6 +66,16 @@ struct DisplayGroup: Identifiable, Equatable {
             return label
         }
         return "Display \(index)"
+    }
+    
+    /// 分辨率描述，如 "2560×1440"
+    var resolution: String {
+        "\(Int(frame.w))×\(Int(frame.h))"
+    }
+    
+    /// 位置描述，如 "(0, 0)"
+    var position: String {
+        "(\(Int(frame.x)), \(Int(frame.y)))"
     }
     
     static func == (lhs: DisplayGroup, rhs: DisplayGroup) -> Bool {
@@ -107,13 +118,17 @@ class SidebarViewModel: ObservableObject {
     private var pollingTimer: Timer?
     private var appIconCache: [Int: NSImage] = [:]  // pid -> icon
     private let yabaiService = YabaiService.shared
-    private let thumbnailService = WindowThumbnailService.shared
     private let loadQueue = DispatchQueue(label: "com.vista.sidebar.load")
     
     // MARK: - Data Loading
     
-    func loadData(withThumbnails: Bool = true) {
-        isLoading = true
+    func loadData() {
+        // #region debug-point D:load-start
+        DebugReport.send(hypothesisId: "D", location: "SidebarViewModel.loadData", msg: "[DEBUG] loadData start", data: ["ts": CFAbsoluteTimeGetCurrent()])
+        // #endregion
+        if displayGroups.isEmpty {
+            isLoading = true
+        }
         error = nil
         
         loadQueue.async { [weak self] in
@@ -124,17 +139,13 @@ class SidebarViewModel: ObservableObject {
                 let spaces = try self.yabaiService.querySpaces()
                 let windows = try self.yabaiService.queryWindows()
                 
-                // Capture thumbnails if enabled
-                var thumbnails: [CGWindowID: NSImage] = [:]
-                if withThumbnails {
-                    let windowIDs = windows.map { CGWindowID($0.id) }
-                    thumbnails = self.thumbnailService.captureAll(windowIDs: windowIDs)
-                }
-                
-                // Build hierarchy
-                let groups = self.buildHierarchy(displays: displays, spaces: spaces, windows: windows, thumbnails: thumbnails)
+                let groups = self.buildHierarchy(displays: displays, spaces: spaces, windows: windows)
                 
                 DispatchQueue.main.async {
+                    // #region debug-point D:main-update
+                    let changed = self.displayGroups != groups
+                    DebugReport.send(hypothesisId: "D", location: "SidebarViewModel.mainUpdate", msg: "[DEBUG] main thread update", data: ["dataChanged": changed, "ts": CFAbsoluteTimeGetCurrent()])
+                    // #endregion
                     if self.displayGroups != groups {
                         self.displayGroups = groups
                     }
@@ -158,8 +169,7 @@ class SidebarViewModel: ObservableObject {
     private func buildHierarchy(
         displays: [YabaiDisplay],
         spaces: [YabaiSpace],
-        windows: [YabaiWindow],
-        thumbnails: [CGWindowID: NSImage]
+        windows: [YabaiWindow]
     ) -> [DisplayGroup] {
         
         // Index windows by space
@@ -181,7 +191,6 @@ class SidebarViewModel: ObservableObject {
                     let spaceWindows = (windowsBySpace[space.index] ?? [])
                         .map { window -> WindowItem in
                             let icon = getAppIcon(pid: window.pid)
-                            let thumb = thumbnails[CGWindowID(window.id)]
                             return WindowItem(
                                 id: window.id,
                                 pid: window.pid,
@@ -189,8 +198,7 @@ class SidebarViewModel: ObservableObject {
                                 title: window.title,
                                 hasFocus: window.hasFocus,
                                 isMinimized: window.isMinimized,
-                                appIcon: icon,
-                                thumbnail: thumb
+                                appIcon: icon
                             )
                         }
                     
@@ -208,9 +216,11 @@ class SidebarViewModel: ObservableObject {
             
             return DisplayGroup(
                 id: display.id,
+                uuid: display.uuid,
                 index: display.index,
                 label: display.label,
                 hasFocus: display.hasFocus,
+                frame: display.frame,
                 spaces: displaySpaces
             )
         }
@@ -239,7 +249,7 @@ class SidebarViewModel: ObservableObject {
     func startPolling() {
         stopPolling()
         pollingTimer = Timer.scheduledTimer(withTimeInterval: AppConstants.pollingInterval, repeats: true) { [weak self] _ in
-            self?.loadData(withThumbnails: false)
+            self?.loadData()
         }
     }
     
@@ -250,14 +260,20 @@ class SidebarViewModel: ObservableObject {
     
     // MARK: - Actions
     
-    func focusSpace(index: Int) {
+    func focusSpace(index: Int, warpMouse: Bool = false) {
+        // 查找目标 space 所属 display 的 frame
+        let displayFrame: YabaiFrame? = warpMouse ? displayGroups.first(where: { $0.spaces.contains(where: { $0.index == index }) })?.frame : nil
+        
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.focusSpace(index: index)
+            if warpMouse, let frame = displayFrame {
+                Thread.sleep(forTimeInterval: 0.15)
+                Self.warpMouseToCenter(of: frame)
+            }
         }
     }
     
-    func focusWindow(id: Int, spaceIndex: Int) {
-        // 查找窗口的 pid 用于 fallback
+    func focusWindow(id: Int, spaceIndex: Int, warpMouse: Bool = false) {
         let windowPid = displayGroups.flatMap(\.spaces).flatMap(\.windows).first(where: { $0.id == id })?.pid
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -267,13 +283,49 @@ class SidebarViewModel: ObservableObject {
                 try self?.yabaiService.focusWindow(id: id)
             } catch {
                 NSLog("[Vista] yabai focusWindow failed for id=\(id), trying NSRunningApplication fallback")
-                // Fallback: 用 NSRunningApplication 激活应用
                 if let pid = windowPid {
                     DispatchQueue.main.async {
                         if let app = NSRunningApplication(processIdentifier: pid_t(pid)) {
                             app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
                         }
                     }
+                }
+            }
+            // 跳转完成后，查询窗口最新 frame 并移动鼠标
+            if warpMouse {
+                Thread.sleep(forTimeInterval: 0.1)
+                if let windows = try? self?.yabaiService.queryWindows(),
+                   let win = windows.first(where: { $0.id == id }) {
+                    Self.warpMouseToCenter(of: win.frame)
+                }
+            }
+        }
+    }
+    
+    /// 将鼠标移到指定 frame 的中心点
+    private static func warpMouseToCenter(of frame: YabaiFrame) {
+        let point = CGPoint(x: frame.x + frame.w / 2, y: frame.y + frame.h / 2)
+        CGWarpMouseCursorPosition(point)
+        // 解除鼠标与上一个事件的关联，避免拖拽残留
+        CGAssociateMouseAndMouseCursorPosition(1)
+    }
+    
+    /// 跳转到 Scene：每个显示屏切换到该 Scene 对应的 Space
+    func gotoScene(_ scene: VistaScene) {
+        let sceneUUIDs = Set(scene.spaceUUIDs)
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            for group in self.displayGroups {
+                // 找该 display 中属于此 scene 的 space
+                let targetSpace = group.spaces.first(where: { sceneUUIDs.contains($0.uuid) })
+                // 找不到则用该 display 的第一个非全屏 space
+                let fallbackSpace = group.spaces.first(where: { !$0.isNativeFullscreen })
+                
+                if let space = targetSpace ?? fallbackSpace {
+                    try? self.yabaiService.focusSpace(index: space.index)
+                    Thread.sleep(forTimeInterval: 0.15)
                 }
             }
         }
@@ -290,7 +342,7 @@ class SidebarViewModel: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.moveWindowToSpace(windowID: windowID, spaceIndex: spaceIndex)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self?.loadData(withThumbnails: false)
+                self?.loadData()
             }
         }
     }
@@ -299,16 +351,24 @@ class SidebarViewModel: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.moveSpaceToDisplay(spaceIndex: spaceIndex, displayIndex: displayIndex)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self?.loadData(withThumbnails: false)
+                self?.loadData()
             }
         }
     }
     
     func closeWindow(id: Int) {
+        // 先从本地列表中移除，立即更新 UI
+        for i in displayGroups.indices {
+            for j in displayGroups[i].spaces.indices {
+                displayGroups[i].spaces[j].windows.removeAll { $0.id == id }
+            }
+        }
+        
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.closeWindow(id: id)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self?.loadData(withThumbnails: false)
+            // 全屏窗口关闭有动画，延迟更久再刷新
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self?.loadData()
             }
         }
     }
@@ -328,7 +388,7 @@ class SidebarViewModel: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.destroySpace(index: index)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self?.loadData(withThumbnails: false)
+                self?.loadData()
             }
         }
     }

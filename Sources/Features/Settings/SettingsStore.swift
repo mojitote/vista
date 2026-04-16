@@ -21,7 +21,6 @@ class SettingsStore: ObservableObject {
     @Published var hotZoneEnabled: Bool = true
     @Published var hotZoneWidth: CGFloat = AppConstants.hotZoneWidth
     @Published var sidebarWidth: CGFloat = AppConstants.defaultSidebarWidth
-    @Published var showThumbnails: Bool = true
     @Published var launchAtLogin: Bool = false
     @Published var fullscreenDropAction: FullscreenDropAction = .toast
     @Published var triggerMode: SidebarTriggerMode = .hotZoneAndHotKey
@@ -57,7 +56,6 @@ class SettingsStore: ObservableObject {
             "hotZoneEnabled": hotZoneEnabled,
             "hotZoneWidth": hotZoneWidth,
             "sidebarWidth": sidebarWidth,
-            "showThumbnails": showThumbnails,
             "launchAtLogin": launchAtLogin,
             "fullscreenDropAction": fullscreenDropAction.rawValue,
             "triggerMode": triggerMode.rawValue,
@@ -96,7 +94,6 @@ class SettingsStore: ObservableObject {
         if let val = settings["hotZoneEnabled"] as? Bool { hotZoneEnabled = val }
         if let val = settings["hotZoneWidth"] as? CGFloat { hotZoneWidth = val }
         if let val = settings["sidebarWidth"] as? CGFloat { sidebarWidth = val }
-        if let val = settings["showThumbnails"] as? Bool { showThumbnails = val }
         if let val = settings["launchAtLogin"] as? Bool { launchAtLogin = val }
         if let val = settings["sidebarHotKeyCode"] as? UInt32 { sidebarHotKeyCode = val }
         if let val = settings["sidebarHotKeyModifiers"] as? UInt32 { sidebarHotKeyModifiers = val }

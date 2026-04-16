@@ -5,12 +5,8 @@ class WindowThumbnailService {
     
     static let shared = WindowThumbnailService()
     
-    /// Capture a thumbnail of a specific window
-    /// - Parameters:
-    ///   - windowID: The CGWindowID of the window to capture
-    ///   - size: Target size for the thumbnail (default 96x64)
-    /// - Returns: NSImage thumbnail, or nil if capture failed (e.g., minimized window)
-    func captureThumbnail(windowID: CGWindowID, size: NSSize = NSSize(width: AppConstants.largeThumbnailWidth, height: AppConstants.largeThumbnailHeight)) -> NSImage? {
+    /// 按需截取单个窗口的预览图
+    func captureThumbnail(windowID: CGWindowID, size: NSSize = NSSize(width: 480, height: 300)) -> NSImage? {
         guard let cgImage = CGWindowListCreateImage(
             .null,
             .optionIncludingWindow,
@@ -23,7 +19,6 @@ class WindowThumbnailService {
         let originalSize = NSSize(width: cgImage.width, height: cgImage.height)
         guard originalSize.width > 0, originalSize.height > 0 else { return nil }
         
-        // Calculate aspect-fit size
         let aspectRatio = originalSize.width / originalSize.height
         let targetRatio = size.width / size.height
         
@@ -34,7 +29,6 @@ class WindowThumbnailService {
             drawSize = NSSize(width: size.height * aspectRatio, height: size.height)
         }
         
-        // Create scaled image
         let image = NSImage(size: size)
         image.lockFocus()
         
@@ -50,18 +44,5 @@ class WindowThumbnailService {
         
         image.unlockFocus()
         return image
-    }
-    
-    /// Capture thumbnails for multiple windows at once
-    /// - Parameter windowIDs: Array of window IDs to capture
-    /// - Returns: Dictionary mapping window ID to its thumbnail
-    func captureAll(windowIDs: [CGWindowID]) -> [CGWindowID: NSImage] {
-        var result: [CGWindowID: NSImage] = [:]
-        for id in windowIDs {
-            if let thumbnail = captureThumbnail(windowID: id) {
-                result[id] = thumbnail
-            }
-        }
-        return result
     }
 }

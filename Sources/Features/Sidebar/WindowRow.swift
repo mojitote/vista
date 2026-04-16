@@ -7,10 +7,12 @@ struct WindowRow: View {
     @ObservedObject var settingsStore: SettingsStore
     @ObservedObject var sceneStore: SceneStore
     var onDismiss: (() -> Void)?
+    var isFullscreen: Bool = false
     @State private var isHovered = false
     @State private var isRenaming = false
     @State private var renameText = ""
     @State private var showPreview = false
+    @State private var previewImage: NSImage?
     
     private var displayApp: String {
         viewModel.windowNames[window.id] ?? window.app
@@ -35,13 +37,33 @@ struct WindowRow: View {
                     .frame(width: AppConstants.appIconSize, height: AppConstants.appIconSize)
             }
             
+            if isFullscreen {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 8))
+                    .foregroundColor(DesignTokens.Colors.fullscreenBadge)
+            }
+            
             // Window info
             VStack(alignment: .leading, spacing: 2) {
-                Text(displayApp)
-                    .font(.system(size: 12, weight: window.hasFocus ? .semibold : .regular))
-                    .lineLimit(1)
+                if isRenaming {
+                    TextField("名称", text: $renameText, onCommit: {
+                        if renameText.isEmpty || renameText == window.app {
+                            viewModel.windowNames.removeValue(forKey: window.id)
+                        } else {
+                            viewModel.windowNames[window.id] = renameText
+                        }
+                        isRenaming = false
+                    })
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, weight: .regular))
+                    .onExitCommand { isRenaming = false }
+                } else {
+                    Text(displayApp)
+                        .font(.system(size: 12, weight: window.hasFocus ? .semibold : .regular))
+                        .lineLimit(1)
+                }
                 
-                if !window.title.isEmpty {
+                if !window.title.isEmpty && !isRenaming {
                     Text(window.title)
                         .font(.system(size: DesignTokens.Font.captionSize))
                         .foregroundColor(DesignTokens.Colors.secondaryText)
@@ -59,8 +81,16 @@ struct WindowRow: View {
             }
             
             // 预览按钮（hover 或预览打开时显示）
-            if settingsStore.previewEnabled && window.thumbnail != nil && (isHovered || showPreview) {
-                Button(action: { showPreview.toggle() }) {
+            if settingsStore.previewEnabled && (isHovered || showPreview) {
+                Button(action: {
+                    if !showPreview {
+                        previewImage = WindowThumbnailService.shared.captureThumbnail(
+                            windowID: CGWindowID(window.id),
+                            size: NSSize(width: settingsStore.previewMaxWidth, height: settingsStore.previewMaxWidth * 0.625)
+                        )
+                    }
+                    showPreview.toggle()
+                }) {
                     Image(systemName: showPreview ? "eye.fill" : "eye")
                         .font(.system(size: 10))
                         .foregroundColor(showPreview ? DesignTokens.Colors.activeIndicator : DesignTokens.Colors.secondaryText)
@@ -76,21 +106,30 @@ struct WindowRow: View {
         )
         .contentShape(Rectangle())
         .onHover { hovering in
+            // #region debug-point A:window-hover
+            let ts = CFAbsoluteTimeGetCurrent()
+            DebugReport.send(hypothesisId: "A", location: "WindowRow.onHover", msg: "[DEBUG] hover=\(hovering) window=\(window.app)", data: ["ts": ts, "hovering": hovering, "windowId": window.id, "app": window.app])
+            // #endregion
             isHovered = hovering
-            if !hovering {
-                // 鼠标离开时不关闭预览，让用户手动关闭或点击其他地方关闭
-            }
         }
         .popover(isPresented: $showPreview, arrowEdge: .trailing) {
-            if let thumbnail = window.thumbnail {
-                Image(nsImage: thumbnail)
+            if let image = previewImage {
+                Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: settingsStore.previewMaxWidth, maxHeight: settingsStore.previewMaxWidth * 0.625)
                     .padding(6)
+            } else {
+                Text("无法截取预览")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(12)
             }
         }
-        .onTapGesture {
+        .onTapGesture(count: 2) {
+            viewModel.focusWindow(id: window.id, spaceIndex: spaceIndex, warpMouse: true)
+        }
+        .onTapGesture(count: 1) {
             viewModel.focusWindow(id: window.id, spaceIndex: spaceIndex)
         }
         .contextMenu {
@@ -115,41 +154,21 @@ struct WindowRow: View {
                 Label("关闭窗口", systemImage: "xmark.circle")
             }
         }
-        .popover(isPresented: $isRenaming, arrowEdge: .trailing) {
-            VStack(spacing: 8) {
-                Text("重命名窗口")
-                    .font(.headline)
-                TextField("名称", text: $renameText)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 160)
-                    .onSubmit {
-                        if renameText.isEmpty || renameText == window.app {
-                            viewModel.windowNames.removeValue(forKey: window.id)
-                        } else {
-                            viewModel.windowNames[window.id] = renameText
-                        }
-                        isRenaming = false
-                    }
-                HStack {
-                    Button("取消") {
-                        isRenaming = false
-                    }
-                    Spacer()
-                    Button("确定") {
-                        if renameText.isEmpty || renameText == window.app {
-                            viewModel.windowNames.removeValue(forKey: window.id)
-                        } else {
-                            viewModel.windowNames[window.id] = renameText
-                        }
-                        isRenaming = false
-                    }
-                    .keyboardShortcut(.defaultAction)
+        .onDrag {
+            if isFullscreen {
+                // 全屏窗口以 space 为单位拖拽，用 uuid 标识
+                let spaceUUID = viewModel.displayGroups.flatMap(\.spaces).first(where: { $0.index == spaceIndex })?.uuid ?? ""
+                return NSItemProvider(object: "space:\(spaceUUID)" as NSString)
+            } else {
+                return NSItemProvider(object: "\(window.id)" as NSString)
+            }
+        }
+        .onChange(of: isRenaming) { renaming in
+            if renaming {
+                DispatchQueue.main.async {
+                    NSApp.windows.first(where: { $0.isVisible && $0 is SidebarPanel })?.makeKey()
                 }
             }
-            .padding(12)
-        }
-        .onDrag {
-            NSItemProvider(object: "\(window.id)" as NSString)
         }
         .opacity(window.isMinimized ? 0.5 : 1.0)
         .padding(.horizontal, DesignTokens.Spacing.md)
@@ -173,7 +192,9 @@ private struct CloseButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            isHovered = hovering
+            withAnimation(DesignTokens.Anim.fast) {
+                isHovered = hovering
+            }
         }
         .help("关闭窗口")
     }

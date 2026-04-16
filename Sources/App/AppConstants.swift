@@ -20,10 +20,6 @@ enum AppConstants {
     static let animationDuration: TimeInterval = 0.15  // 150ms
     static let mouseOutDelay: TimeInterval = 0.3  // 300ms
     static let commandTimeout: TimeInterval = 2.0  // 2s
-    static let thumbnailWidth: CGFloat = 48
-    static let thumbnailHeight: CGFloat = 32
-    static let largeThumbnailWidth: CGFloat = 96
-    static let largeThumbnailHeight: CGFloat = 64
     static let appIconSize: CGFloat = 16
     static let activeIndicatorWidth: CGFloat = 3
     static let appName = "Vista"

@@ -2,7 +2,7 @@ import Foundation
 import AppKit
 
 // MARK: - Frame
-struct YabaiFrame: Codable {
+struct YabaiFrame: Codable, Equatable {
     let x: CGFloat
     let y: CGFloat
     let w: CGFloat
