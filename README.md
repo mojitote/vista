@@ -8,11 +8,26 @@ macOS 原生侧边栏应用，作为 [yabai](https://github.com/koekeishiya/yaba
 
 > 用户只需要 `Vista.app` + yabai 环境，**不需要 Xcode**。
 
-### 1. 安装 yabai
+### 1. 安装 yabai v7.1.16
+
+> **Vista 仅支持 yabai v7.1.16**。Homebrew 最新版（v7.1.18+）在 macOS Sequoia 上存在命令卡死等严重问题，请勿使用 `brew install` 安装。
 
 ```bash
-brew install koekeishiya/formulae/yabai
+# 下载 v7.1.16 预编译二进制
+curl -L https://github.com/koekeishiya/yabai/releases/download/v7.1.16/yabai-v7.1.16.tar.gz -o /tmp/yabai.tar.gz
+
+# 解压并安装到 Homebrew bin 目录（保持路径统一）
+mkdir -p /tmp/yabai-extract && tar xzf /tmp/yabai.tar.gz -C /tmp/yabai-extract
+sudo cp /tmp/yabai-extract/archive/bin/yabai /opt/homebrew/bin/yabai   # Apple Silicon
+# sudo cp /tmp/yabai-extract/archive/bin/yabai /usr/local/bin/yabai    # Intel
+sudo chmod +x /opt/homebrew/bin/yabai
+
+# 验证版本
+yabai --version
+# 应输出 yabai-v7.1.16
 ```
+
+> 如果之前通过 Homebrew 安装过 yabai，先执行 `brew uninstall yabai` 再进行上述步骤，避免冲突。
 
 ### 2. 部分关闭 SIP（System Integrity Protection）
 
