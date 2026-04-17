@@ -102,12 +102,16 @@ class SidebarViewModel: ObservableObject {
     var sceneStore: SceneStore?
     
     /// 根据当前 Scene 过滤后的 displayGroups
+    /// 除了 scene 里的 space 外，还会**额外**包含该 display 上当前可见（用户正站着）的 space，
+    /// 方便用户知道自己此刻在哪，即使那个 space 不属于当前 scene。
     var filteredDisplayGroups: [DisplayGroup] {
         guard let filter = sceneStore?.filteredSpaceUUIDs else {
             return displayGroups
         }
         return displayGroups.compactMap { group in
-            let filteredSpaces = group.spaces.filter { filter.contains($0.uuid) }
+            let filteredSpaces = group.spaces.filter { space in
+                filter.contains(space.uuid) || space.isVisible
+            }
             guard !filteredSpaces.isEmpty else { return nil }
             var g = group
             g.spaces = filteredSpaces
@@ -123,9 +127,6 @@ class SidebarViewModel: ObservableObject {
     // MARK: - Data Loading
     
     func loadData() {
-        // #region debug-point D:load-start
-        DebugReport.send(hypothesisId: "D", location: "SidebarViewModel.loadData", msg: "[DEBUG] loadData start", data: ["ts": CFAbsoluteTimeGetCurrent()])
-        // #endregion
         if displayGroups.isEmpty {
             isLoading = true
         }
@@ -139,15 +140,13 @@ class SidebarViewModel: ObservableObject {
                 let spaces = try self.yabaiService.querySpaces()
                 let windows = try self.yabaiService.queryWindows()
                 
-                let groups = self.buildHierarchy(displays: displays, spaces: spaces, windows: windows)
+                let rawGroups = self.buildHierarchy(displays: displays, spaces: spaces, windows: windows)
                 
                 DispatchQueue.main.async {
-                    // #region debug-point D:main-update
-                    let changed = self.displayGroups != groups
-                    DebugReport.send(hypothesisId: "D", location: "SidebarViewModel.mainUpdate", msg: "[DEBUG] main thread update", data: ["dataChanged": changed, "ts": CFAbsoluteTimeGetCurrent()])
-                    // #endregion
-                    if self.displayGroups != groups {
-                        self.displayGroups = groups
+                    // 轮询刷新时保留用户手动折叠的状态
+                    let merged = self.mergingExpandedState(into: rawGroups)
+                    if self.displayGroups != merged {
+                        self.displayGroups = merged
                     }
                     self.isLoading = false
                     self.isYabaiRunning = true
@@ -173,8 +172,11 @@ class SidebarViewModel: ObservableObject {
     ) -> [DisplayGroup] {
         
         // Index windows by space
+        // 过滤掉 yabai 无法通过 AX 控制的「幽灵窗口」：
+        // 常见于 Firefox/Zen/Electron 等在后台维持的不可见窗口，用户视觉上没打开，
+        // yabai 也 focus/close/move 不了，显示出来只是徒增困惑。
         var windowsBySpace: [Int: [YabaiWindow]] = [:]
-        for window in windows {
+        for window in windows where window.hasAXReference {
             windowsBySpace[window.space, default: []].append(window)
         }
         
@@ -223,6 +225,25 @@ class SidebarViewModel: ObservableObject {
                 frame: display.frame,
                 spaces: displaySpaces
             )
+        }
+    }
+    
+    /// 用旧 displayGroups 里的 isExpanded 覆盖新 groups，保留用户折叠/展开操作。
+    private func mergingExpandedState(into newGroups: [DisplayGroup]) -> [DisplayGroup] {
+        let oldExpanded: [Int64: Bool] = Dictionary(
+            uniqueKeysWithValues: displayGroups.flatMap(\.spaces).map { ($0.id, $0.isExpanded) }
+        )
+        guard !oldExpanded.isEmpty else { return newGroups }
+        return newGroups.map { group in
+            var g = group
+            g.spaces = g.spaces.map { space in
+                var s = space
+                if let expanded = oldExpanded[space.id] {
+                    s.isExpanded = expanded
+                }
+                return s
+            }
+            return g
         }
     }
     
@@ -311,19 +332,63 @@ class SidebarViewModel: ObservableObject {
     }
     
     /// 跳转到 Scene：每个显示屏切换到该 Scene 对应的 Space
+    /// 如果**当前**已在此 Scene 下（鼠标所在 display 的可见 space 属于该 scene），
+    /// 则在鼠标所在 display 上循环切换该 Scene 的 Space；否则做一次完整激活。
+    ///
+    /// 注意：不能依赖 `displayGroups` 缓存——它只在侧边栏显示时轮询刷新，
+    /// 后台按快捷键时缓存往往是旧的。每次直接 query yabai 拿最新 space 分布。
     func gotoScene(_ scene: VistaScene) {
         let sceneUUIDs = Set(scene.spaceUUIDs)
+        let cgMouseLocation = CGEvent(source: nil)?.location ?? .zero
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            for group in self.displayGroups {
-                // 找该 display 中属于此 scene 的 space
-                let targetSpace = group.spaces.first(where: { sceneUUIDs.contains($0.uuid) })
-                // 找不到则用该 display 的第一个非全屏 space
-                let fallbackSpace = group.spaces.first(where: { !$0.isNativeFullscreen })
+            guard let displays = try? self.yabaiService.queryDisplays(),
+                  let spaces = try? self.yabaiService.querySpaces() else {
+                return
+            }
+            
+            let spacesByDisplay = Dictionary(grouping: spaces, by: { $0.display })
+            
+            // 找到鼠标所在的 display（yabai frame 用 CGDisplay 坐标系，与 CGEvent 一致）
+            let mouseDisplay = displays.first(where: { disp in
+                let f = disp.frame
+                return CGRect(x: f.x, y: f.y, width: f.w, height: f.h).contains(cgMouseLocation)
+            })
+            
+            // 仅当「鼠标 display 当前 visible 的 space 属于此 Scene」且该 display 上有 >1 个 scene space 时才轮换。
+            // 这样第一次按快捷键是激活 scene，连按才轮换。
+            if let display = mouseDisplay {
+                let displaySpaces = (spacesByDisplay[display.index] ?? []).sorted(by: { $0.index < $1.index })
+                if let currentVisible = displaySpaces.first(where: { $0.isVisible }),
+                   sceneUUIDs.contains(currentVisible.uuid) {
+                    let sceneSpaces = displaySpaces.filter { sceneUUIDs.contains($0.uuid) }
+                    if sceneSpaces.count > 1,
+                       let currentIndex = sceneSpaces.firstIndex(where: { $0.uuid == currentVisible.uuid }) {
+                        let nextSpace = sceneSpaces[(currentIndex + 1) % sceneSpaces.count]
+                        try? self.yabaiService.focusSpace(index: nextSpace.index)
+                        return
+                    }
+                }
+            }
+            
+            // 否则做一次完整激活：每个 display 切到对应的 scene space
+            // 若该 display 上没有 scene space，按用户设置决定：保持不动 / 切到第一个非全屏 space
+            let fallbackMode = SettingsStore.shared.sceneDisplayFallback
+            for display in displays {
+                let displaySpaces = (spacesByDisplay[display.index] ?? []).sorted(by: { $0.index < $1.index })
+                let targetSpace = displaySpaces.first(where: { sceneUUIDs.contains($0.uuid) })
                 
-                if let space = targetSpace ?? fallbackSpace {
+                let space: YabaiSpace? = {
+                    if let t = targetSpace { return t }
+                    switch fallbackMode {
+                    case .stayPut: return nil
+                    case .firstNonFullscreen: return displaySpaces.first(where: { !$0.isNativeFullscreen })
+                    }
+                }()
+                
+                if let space {
                     try? self.yabaiService.focusSpace(index: space.index)
                     Thread.sleep(forTimeInterval: 0.15)
                 }
@@ -332,17 +397,61 @@ class SidebarViewModel: ObservableObject {
     }
     
     func moveWindowToSpace(windowID: Int, spaceIndex: Int) {
-        // 全屏 Space 无法移入窗口
         let targetSpace = displayGroups.flatMap(\.spaces).first(where: { $0.index == spaceIndex })
+        
+        // 全屏 Space 无法直接移入窗口，按用户设置处理
         if targetSpace?.isNativeFullscreen == true {
-            showToast("无法移入：目标 Space 处于全屏模式")
-            return
+            switch SettingsStore.shared.fullscreenDropAction {
+            case .toast:
+                showToast("无法移入：目标 Space 处于全屏模式")
+                return
+            case .exitAndMove:
+                exitFullscreenThenMove(windowID: windowID, fullscreenSpaceIndex: spaceIndex)
+                return
+            }
         }
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             try? self?.yabaiService.moveWindowToSpace(windowID: windowID, spaceIndex: spaceIndex)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 self?.loadData()
+            }
+        }
+    }
+    
+    /// 退出目标全屏 Space，然后把源窗口移入"那个全屏窗口退回到的普通 Space"。
+    ///
+    /// 流程：
+    /// 1. 记录全屏 Space 内那个窗口的 id（假设唯一）
+    /// 2. toggleNativeFullscreen 使其退出全屏，原生动画 ~0.5s
+    /// 3. 动画结束后 requery，查该 window.space 即为承接 Space
+    /// 4. moveWindowToSpace → 该 space index
+    private func exitFullscreenThenMove(windowID: Int, fullscreenSpaceIndex: Int) {
+        let fullscreenWindowID = displayGroups
+            .flatMap(\.spaces)
+            .first(where: { $0.index == fullscreenSpaceIndex })?
+            .windows.first?.id
+        
+        guard let fullscreenWindowID else {
+            showToast("无法移入：目标 Space 处于全屏模式")
+            return
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            try? self.yabaiService.toggleNativeFullscreen(windowID: fullscreenWindowID)
+            // 等待 macOS 原生全屏退出动画
+            Thread.sleep(forTimeInterval: 0.7)
+            
+            let newHostSpaceIndex: Int? = (try? self.yabaiService.queryWindows())?
+                .first(where: { $0.id == fullscreenWindowID })?
+                .space
+            
+            if let newHostSpaceIndex {
+                try? self.yabaiService.moveWindowToSpace(windowID: windowID, spaceIndex: newHostSpaceIndex)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.loadData()
             }
         }
     }

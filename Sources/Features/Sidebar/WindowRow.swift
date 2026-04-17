@@ -106,10 +106,6 @@ struct WindowRow: View {
         )
         .contentShape(Rectangle())
         .onHover { hovering in
-            // #region debug-point A:window-hover
-            let ts = CFAbsoluteTimeGetCurrent()
-            DebugReport.send(hypothesisId: "A", location: "WindowRow.onHover", msg: "[DEBUG] hover=\(hovering) window=\(window.app)", data: ["ts": ts, "hovering": hovering, "windowId": window.id, "app": window.app])
-            // #endregion
             isHovered = hovering
         }
         .popover(isPresented: $showPreview, arrowEdge: .trailing) {

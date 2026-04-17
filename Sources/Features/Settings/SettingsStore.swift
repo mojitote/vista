@@ -1,6 +1,6 @@
 import Foundation
+import AppKit
 import HotKey
-import Carbon
 
 enum FullscreenDropAction: String {
     case toast = "toast"
@@ -10,6 +10,39 @@ enum FullscreenDropAction: String {
 enum SidebarTriggerMode: String {
     case hotZoneAndHotKey = "hotZoneAndHotKey"
     case threeFingerTap = "threeFingerTap"
+}
+
+/// 激活 scene 时，若某个 display 上没有该 scene 的 space 应如何处理
+enum SceneDisplayFallback: String {
+    case stayPut          // 不动这个 display
+    case firstNonFullscreen  // 切到第一个非全屏 space
+}
+
+/// 侧边栏毛玻璃强度。NSVisualEffectView 不支持直接调 blur 半径，
+/// 通过切换 material 在苹果预设档位间选：各 material 的 blur 半径、tint、饱和度都不同。
+enum SidebarBlurMaterial: String, CaseIterable {
+    case subtle   // .popover —— 浅、blur 较小
+    case regular  // .sidebar —— 标准边栏质感，中等 blur + 高饱和度
+    case strong   // .fullScreenUI —— 最浑厚，blur 大 tint 重
+    case hud      // .hudWindow —— HUD 风格，深色 tint
+    
+    var nsMaterial: NSVisualEffectView.Material {
+        switch self {
+        case .subtle:  return .popover
+        case .regular: return .sidebar
+        case .strong:  return .fullScreenUI
+        case .hud:     return .hudWindow
+        }
+    }
+    
+    var displayName: String {
+        switch self {
+        case .subtle:  return "Subtle"
+        case .regular: return "Regular"
+        case .strong:  return "Strong"
+        case .hud:     return "HUD"
+        }
+    }
 }
 
 class SettingsStore: ObservableObject {
@@ -23,6 +56,7 @@ class SettingsStore: ObservableObject {
     @Published var sidebarWidth: CGFloat = AppConstants.defaultSidebarWidth
     @Published var launchAtLogin: Bool = false
     @Published var fullscreenDropAction: FullscreenDropAction = .toast
+    @Published var sceneDisplayFallback: SceneDisplayFallback = .stayPut
     @Published var triggerMode: SidebarTriggerMode = .hotZoneAndHotKey
     @Published var doubleTapDelay: TimeInterval = 0.20  // 双击等待超时（秒）
     
@@ -32,7 +66,8 @@ class SettingsStore: ObservableObject {
     
     // Sidebar appearance
     @Published var sidebarColorHex: String?  // nil = 系统默认毛玻璃
-    @Published var sidebarOpacity: Double = 0.85
+    @Published var sidebarOpacity: Double = 0.4  // tint 叠加透明度（0 = 无 tint，1 = 纯色）
+    @Published var sidebarBlurMaterial: SidebarBlurMaterial = .regular
     
     // Hot key stored as key code + modifiers
     @Published var sidebarHotKeyCode: UInt32?
@@ -58,9 +93,11 @@ class SettingsStore: ObservableObject {
             "sidebarWidth": sidebarWidth,
             "launchAtLogin": launchAtLogin,
             "fullscreenDropAction": fullscreenDropAction.rawValue,
+            "sceneDisplayFallback": sceneDisplayFallback.rawValue,
             "triggerMode": triggerMode.rawValue,
             "doubleTapDelay": doubleTapDelay,
             "sidebarOpacity": sidebarOpacity,
+            "sidebarBlurMaterial": sidebarBlurMaterial.rawValue,
             "previewEnabled": previewEnabled,
             "previewMaxWidth": previewMaxWidth,
         ]
@@ -99,11 +136,15 @@ class SettingsStore: ObservableObject {
         if let val = settings["sidebarHotKeyModifiers"] as? UInt32 { sidebarHotKeyModifiers = val }
         if let val = settings["fullscreenDropAction"] as? String,
            let action = FullscreenDropAction(rawValue: val) { fullscreenDropAction = action }
+        if let val = settings["sceneDisplayFallback"] as? String,
+           let mode = SceneDisplayFallback(rawValue: val) { sceneDisplayFallback = mode }
         if let val = settings["triggerMode"] as? String,
            let mode = SidebarTriggerMode(rawValue: val) { triggerMode = mode }
         if let val = settings["doubleTapDelay"] as? TimeInterval { doubleTapDelay = val }
         if let val = settings["sidebarColorHex"] as? String { sidebarColorHex = val }
         if let val = settings["sidebarOpacity"] as? Double { sidebarOpacity = val }
+        if let val = settings["sidebarBlurMaterial"] as? String,
+           let m = SidebarBlurMaterial(rawValue: val) { sidebarBlurMaterial = m }
         if let val = settings["previewEnabled"] as? Bool { previewEnabled = val }
         if let val = settings["previewMaxWidth"] as? CGFloat { previewMaxWidth = val }
     }
@@ -122,8 +163,6 @@ class SettingsStore: ObservableObject {
         return NSColor(hex: hex)
     }
 }
-
-import AppKit
 
 extension NSColor {
     convenience init?(hex: String) {

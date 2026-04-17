@@ -11,6 +11,7 @@ struct SpaceRow: View {
     @State private var isDropTargeted = false
     @State private var isRenaming = false
     @State private var renameText = ""
+    @State private var showCreateScene = false
     
     /// 该 Space 归属的 Scene
     private var belongingScene: VistaScene? {
@@ -24,20 +25,19 @@ struct SpaceRow: View {
         return Color(nsColor: nsColor)
     }
     
-    /// 是否应该显示 Space 标题行
-    private var shouldShowHeader: Bool {
-        return true
-    }
-    
-    /// 全屏 Space 折叠为单行（不显示 header，窗口直接平铺）
-    private var isFullscreenCollapsed: Bool {
-        false
+    /// 当前激活了某个具体 scene，且此 space 不在该 scene 的 spaceUUIDs 中。
+    /// 这样的 space 之所以会出现在侧边栏，是因为它当前在某个 display 上 visible——
+    /// 视觉上用较低透明度 + 左侧虚线边界标识「临时显示，不属于当前 scene」。
+    private var isTransientInActiveScene: Bool {
+        guard let activeSceneSpaces = sceneStore.filteredSpaceUUIDs else { return false }
+        return !activeSceneSpaces.contains(space.uuid)
     }
     
     var body: some View {
         VStack(spacing: 0) {
-            if isFullscreenCollapsed {
-                // 全屏 Space：不显示标题，窗口直接作为单行
+            spaceHeader
+            
+            if space.isExpanded {
                 ForEach(space.windows) { window in
                     WindowRow(
                         window: window,
@@ -46,38 +46,12 @@ struct SpaceRow: View {
                         settingsStore: settingsStore,
                         sceneStore: sceneStore,
                         onDismiss: onDismiss,
-                        isFullscreen: true
+                        isFullscreen: space.isNativeFullscreen
                     )
-                }
-            } else {
-                // 普通 Space
-                if shouldShowHeader {
-                    spaceHeader
-                } else {
-                    // 无标题：用细分隔线分隔
-                    Rectangle()
-                        .fill(DesignTokens.Colors.separator)
-                        .frame(height: 0.5)
-                        .padding(.horizontal, DesignTokens.Spacing.lg)
-                        .padding(.vertical, 2)
-                }
-                
-                // 窗口列表（无标题时默认展开）
-                if space.isExpanded || !shouldShowHeader {
-                    ForEach(space.windows) { window in
-                        WindowRow(
-                            window: window,
-                            spaceIndex: space.index,
-                            viewModel: viewModel,
-                            settingsStore: settingsStore,
-                            sceneStore: sceneStore,
-                            onDismiss: onDismiss,
-                            isFullscreen: space.isNativeFullscreen
-                        )
-                    }
                 }
             }
         }
+        .opacity(isTransientInActiveScene ? 0.55 : 1.0)
         // 整个 Space 区域的背景（hover / drop / scene 底色）
         .background(
             RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
@@ -85,12 +59,18 @@ struct SpaceRow: View {
                       isHovered ? (sceneColor?.opacity(0.15) ?? DesignTokens.Colors.hoverBackground) :
                       sceneColor?.opacity(0.08) ?? Color.clear)
         )
+        // 临时 space 左侧一条细 stripe，提示「不属于当前 scene」
+        .overlay(alignment: .leading) {
+            if isTransientInActiveScene {
+                Capsule()
+                    .fill(DesignTokens.Colors.subtleText.opacity(0.6))
+                    .frame(width: 2)
+                    .padding(.vertical, 4)
+                    .padding(.leading, 2)
+            }
+        }
         .contentShape(Rectangle())
         .onHover { hovering in
-            // #region debug-point B:space-hover
-            let ts = CFAbsoluteTimeGetCurrent()
-            DebugReport.send(hypothesisId: "B", location: "SpaceRow.onHover", msg: "[DEBUG] hover=\(hovering) space=\(space.index)", data: ["ts": ts, "hovering": hovering, "spaceIndex": space.index])
-            // #endregion
             isHovered = hovering
         }
         .contextMenu {
@@ -108,6 +88,15 @@ struct SpaceRow: View {
             }
             
             Divider()
+            
+            // 由此创建 Scene
+            if belongingScene == nil {
+                Button(action: {
+                    showCreateScene = true
+                }) {
+                    Label("由此创建 Scene", systemImage: "plus.rectangle.on.folder")
+                }
+            }
             
             // 归属 Scene 子菜单
             Menu {
@@ -162,6 +151,13 @@ struct SpaceRow: View {
                     NSApp.windows.first(where: { $0.isVisible && $0 is SidebarPanel })?.makeKey()
                 }
             }
+        }
+        .sheet(isPresented: $showCreateScene) {
+            SceneEditorView(
+                sceneStore: sceneStore,
+                editingScene: nil,
+                preselectedSpaceUUID: space.uuid
+            )
         }
     }
     

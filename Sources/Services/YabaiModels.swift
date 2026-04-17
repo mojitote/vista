@@ -65,6 +65,9 @@ struct YabaiWindow: Codable, Identifiable {
     let isHidden: Bool
     let isFloating: Bool
     let isSticky: Bool
+    /// yabai 是否能通过 AX 引用操控此窗口。false 表示这是个「幽灵/僵尸窗口」
+    /// （常见于 Firefox/Zen/Electron 后台维持的不可见窗口），无法 focus/close/move。
+    let hasAXReference: Bool
     
     enum CodingKeys: String, CodingKey {
         case id, pid, app, title, frame, display, space
@@ -74,5 +77,6 @@ struct YabaiWindow: Codable, Identifiable {
         case isHidden = "is-hidden"
         case isFloating = "is-floating"
         case isSticky = "is-sticky"
+        case hasAXReference = "has-ax-reference"
     }
 }

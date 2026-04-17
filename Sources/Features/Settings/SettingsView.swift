@@ -86,10 +86,27 @@ struct SettingsView: View {
             
             Section("General") {
                 Toggle("Launch at Login", isOn: $store.launchAtLogin)
+                
+                Picker("Drop onto Fullscreen Space", selection: $store.fullscreenDropAction) {
+                    Text("Show Toast").tag(FullscreenDropAction.toast)
+                    Text("Exit Fullscreen & Move").tag(FullscreenDropAction.exitAndMove)
+                }
+                
+                Picker("Scene Activation: Display Without Scene Space", selection: $store.sceneDisplayFallback) {
+                    Text("Stay Put").tag(SceneDisplayFallback.stayPut)
+                    Text("Switch to First Non-Fullscreen").tag(SceneDisplayFallback.firstNonFullscreen)
+                }
             }
             
             Section("Sidebar Appearance") {
-                Toggle("Custom Background Color", isOn: $useCustomColor)
+                Picker("Blur Style", selection: $store.sidebarBlurMaterial) {
+                    ForEach(SidebarBlurMaterial.allCases, id: \.self) { m in
+                        Text(m.displayName).tag(m)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                Toggle("Custom Tint Color", isOn: $useCustomColor)
                     .onChange(of: useCustomColor) { newValue in
                         if newValue {
                             let nsColor = NSColor(selectedColor)
@@ -100,19 +117,19 @@ struct SettingsView: View {
                     }
                 
                 if useCustomColor {
-                    ColorPicker("Background Color", selection: $selectedColor, supportsOpacity: false)
+                    ColorPicker("Tint Color", selection: $selectedColor, supportsOpacity: false)
                         .onChange(of: selectedColor) { newValue in
                             let nsColor = NSColor(newValue)
                             store.sidebarColorHex = nsColor.hexString
                         }
-                    
-                    HStack {
-                        Text("Opacity")
-                        Slider(value: $store.sidebarOpacity, in: 0.3...1.0, step: 0.05)
-                        Text("\(Int(store.sidebarOpacity * 100))%")
-                            .monospacedDigit()
-                            .frame(width: 40)
-                    }
+                }
+                
+                HStack {
+                    Text("Tint Opacity")
+                    Slider(value: $store.sidebarOpacity, in: 0.0...1.0, step: 0.05)
+                    Text("\(Int(store.sidebarOpacity * 100))%")
+                        .monospacedDigit()
+                        .frame(width: 40)
                 }
             }
         }

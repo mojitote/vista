@@ -11,9 +11,9 @@
 		0BF23001878266FB32509F0D /* HotZoneManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6BA25F5972488735E6ABA2 /* HotZoneManager.swift */; };
 		20E65BFE93B77D47ECBD58CB /* HotKeysManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E92968F314D5498A862168 /* HotKeysManager.swift */; };
 		22F01CA80F93BF2940A376CA /* SidebarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCCCB5292E9893AF269B26E8 /* SidebarViewModel.swift */; };
+		24E585D75712610822505D47 /* HotkeyDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C783752AAFD4CD9285B6A1 /* HotkeyDisplay.swift */; };
 		3068449E0E0ED95171D3F360 /* SceneStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2AD12046C10B913F177160 /* SceneStore.swift */; };
 		3C277022329020C628E6E5CD /* YabaiModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F32BAC399EB316F8BDB7CD5 /* YabaiModels.swift */; };
-		43F89DBE93C041A2AAE5CAA7 /* SceneRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F0AC52EBB20FEEC4B37E7F4 /* SceneRow.swift */; };
 		4A8A4099367540B642AE4889 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9492B78B04D1763BDCC4A0 /* Scene.swift */; };
 		53159C466953278DC43130B3 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 3CE5890DCC96F282DDBFE226 /* HotKey */; };
 		534D15115F3ADCEDA15AF812 /* WindowRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827FB279504D2C927F96620 /* WindowRow.swift */; };
@@ -26,13 +26,13 @@
 		92B0CB491048651158401645 /* WindowThumbnailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */; };
 		959A2A504C81318167FDFD0F /* SpaceNameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A2512BFCA2DA25380D1A5D /* SpaceNameStore.swift */; };
 		9B1A603329566E510E7C54D1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6032D2A817C998D34E57E29 /* AppDelegate.swift */; };
+		9BDDC652E6DF21B895B4C417 /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57D0FD3EAE57E9B452D4359 /* LaunchAtLoginService.swift */; };
 		ACE72BC78BE51ADE82C45C98 /* SceneBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CB2F32504FB8781ADB65175 /* SceneBar.swift */; };
 		CCCA106C00918443D38AD4DE /* SpaceRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E4EC045EA9E54C93D87F43 /* SpaceRow.swift */; };
 		D1BB3B59CA9BFC5CE3EBAE71 /* YabaiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6727D88BA81432FF9385C87D /* YabaiService.swift */; };
 		D66D9A4BD1455B7B1047DFC6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4442B6070950D247E88F9CD7 /* SettingsView.swift */; };
 		DB751D63F1B7E0549A574324 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D1597C29ACE97F0CA5D696 /* SettingsStore.swift */; };
 		DC0A7C19183E63682FC3BCBD /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */; };
-		DF7EA740B51AB03F47764C5A /* DebugReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 652E79722C223E34777D90FA /* DebugReport.swift */; };
 		DFBC9DC6C193534FCF5BF729 /* SceneEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050A366949BA50079253E2D8 /* SceneEditorView.swift */; };
 /* End PBXBuildFile section */
 
@@ -42,11 +42,10 @@
 		0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		1D9492B78B04D1763BDCC4A0 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
 		3532ABEFBB7E0FBC43A23BD0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		37C783752AAFD4CD9285B6A1 /* HotkeyDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyDisplay.swift; sourceTree = "<group>"; };
 		3F32BAC399EB316F8BDB7CD5 /* YabaiModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YabaiModels.swift; sourceTree = "<group>"; };
 		4442B6070950D247E88F9CD7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		652E79722C223E34777D90FA /* DebugReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugReport.swift; sourceTree = "<group>"; };
 		6727D88BA81432FF9385C87D /* YabaiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YabaiService.swift; sourceTree = "<group>"; };
-		7F0AC52EBB20FEEC4B37E7F4 /* SceneRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneRow.swift; sourceTree = "<group>"; };
 		80E4EC045EA9E54C93D87F43 /* SpaceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceRow.swift; sourceTree = "<group>"; };
 		97E92968F314D5498A862168 /* HotKeysManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeysManager.swift; sourceTree = "<group>"; };
 		9F132BD22B436B1492416ED9 /* TrackpadTriggerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackpadTriggerManager.swift; sourceTree = "<group>"; };
@@ -63,6 +62,7 @@
 		E827FB279504D2C927F96620 /* WindowRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowRow.swift; sourceTree = "<group>"; };
 		EF6BA25F5972488735E6ABA2 /* HotZoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotZoneManager.swift; sourceTree = "<group>"; };
 		F0A928F417D9FD49CA964B64 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
+		F57D0FD3EAE57E9B452D4359 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
 		F7AE39D4536254D6FCDAE1F2 /* VistaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VistaApp.swift; sourceTree = "<group>"; };
 		FA2AD12046C10B913F177160 /* SceneStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -124,7 +124,6 @@
 			children = (
 				0CB2F32504FB8781ADB65175 /* SceneBar.swift */,
 				050A366949BA50079253E2D8 /* SceneEditorView.swift */,
-				7F0AC52EBB20FEEC4B37E7F4 /* SceneRow.swift */,
 				FA2AD12046C10B913F177160 /* SceneStore.swift */,
 				C0A2512BFCA2DA25380D1A5D /* SpaceNameStore.swift */,
 			);
@@ -134,6 +133,7 @@
 		572E48287714F54416EEEFCF /* HotKeys */ = {
 			isa = PBXGroup;
 			children = (
+				37C783752AAFD4CD9285B6A1 /* HotkeyDisplay.swift */,
 				97E92968F314D5498A862168 /* HotKeysManager.swift */,
 			);
 			path = HotKeys;
@@ -190,8 +190,8 @@
 			children = (
 				0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */,
 				C6032D2A817C998D34E57E29 /* AppDelegate.swift */,
-				652E79722C223E34777D90FA /* DebugReport.swift */,
 				BE643961AA77111E24BD791C /* DesignTokens.swift */,
+				F57D0FD3EAE57E9B452D4359 /* LaunchAtLoginService.swift */,
 				F7AE39D4536254D6FCDAE1F2 /* VistaApp.swift */,
 			);
 			path = App;
@@ -275,16 +275,16 @@
 			files = (
 				DC0A7C19183E63682FC3BCBD /* AppConstants.swift in Sources */,
 				9B1A603329566E510E7C54D1 /* AppDelegate.swift in Sources */,
-				DF7EA740B51AB03F47764C5A /* DebugReport.swift in Sources */,
 				72CC33F5F34223BC08EBD310 /* DesignTokens.swift in Sources */,
 				6549644813E0D8DF9A158886 /* DisplaySection.swift in Sources */,
 				20E65BFE93B77D47ECBD58CB /* HotKeysManager.swift in Sources */,
 				0BF23001878266FB32509F0D /* HotZoneManager.swift in Sources */,
+				24E585D75712610822505D47 /* HotkeyDisplay.swift in Sources */,
+				9BDDC652E6DF21B895B4C417 /* LaunchAtLoginService.swift in Sources */,
 				8B1A66BE41626BE78BE0E2DB /* MenuBarManager.swift in Sources */,
 				4A8A4099367540B642AE4889 /* Scene.swift in Sources */,
 				ACE72BC78BE51ADE82C45C98 /* SceneBar.swift in Sources */,
 				DFBC9DC6C193534FCF5BF729 /* SceneEditorView.swift in Sources */,
-				43F89DBE93C041A2AAE5CAA7 /* SceneRow.swift in Sources */,
 				3068449E0E0ED95171D3F360 /* SceneStore.swift in Sources */,
 				DB751D63F1B7E0549A574324 /* SettingsStore.swift in Sources */,
 				D66D9A4BD1455B7B1047DFC6 /* SettingsView.swift in Sources */,

@@ -1,13 +1,14 @@
 import Cocoa
 import HotKey
-import Carbon
 
 class HotKeysManager {
     
     private var sidebarHotKey: HotKey?
     private var sceneHotKeys: [UUID: HotKey] = [:]
+    private var allSceneHotKey: HotKey?
     var onToggleSidebar: (() -> Void)?
     var onGotoScene: ((VistaScene) -> Void)?
+    var onActivateAll: (() -> Void)?
     
     func updateSidebarHotKey(keyCombo: KeyCombo?) {
         sidebarHotKey = nil
@@ -40,9 +41,25 @@ class HotKeysManager {
         }
     }
     
+    func updateAllHotKey(keyCode: UInt32?, modifiers: UInt32?) {
+        allSceneHotKey = nil
+        
+        guard let keyCode = keyCode, let modifiers = modifiers,
+              let key = Key(carbonKeyCode: keyCode) else { return }
+        
+        let mods = NSEvent.ModifierFlags(carbonFlags: modifiers)
+        let keyCombo = KeyCombo(key: key, modifiers: mods)
+        let hotKey = HotKey(keyCombo: keyCombo)
+        hotKey.keyDownHandler = { [weak self] in
+            self?.onActivateAll?()
+        }
+        allSceneHotKey = hotKey
+    }
+    
     func clearAll() {
         sidebarHotKey = nil
         sceneHotKeys.removeAll()
+        allSceneHotKey = nil
     }
     
     deinit {

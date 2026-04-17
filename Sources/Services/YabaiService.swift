@@ -177,6 +177,21 @@ class YabaiService {
         _ = try sendMessage(args: ["window", "\(windowID)", "--toggle", "native-fullscreen"])
     }
     
+    // MARK: - Convenience
+    
+    /// 取消目标 Space 的原生全屏（若 Space 内有全屏窗口，则 toggle 其全屏）。
+    /// 返回 true 表示发出了 toggle，false 表示没找到可操作窗口。
+    @discardableResult
+    func exitNativeFullscreen(onSpaceIndex spaceIndex: Int) throws -> Bool {
+        let windows = try queryWindows()
+        // yabai 在全屏 Space 里通常只有一个窗口，这里宽松地 toggle 第一个匹配
+        guard let fullscreenWindow = windows.first(where: { $0.space == spaceIndex }) else {
+            return false
+        }
+        try toggleNativeFullscreen(windowID: fullscreenWindow.id)
+        return true
+    }
+    
     // MARK: - Connection Check
     
     var isYabaiRunning: Bool {

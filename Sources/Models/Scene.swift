@@ -11,9 +11,6 @@ struct VistaScene: Codable, Identifiable {
     var hotkeyKeyCode: UInt32?
     var hotkeyModifiers: UInt32?
     
-    // 向后兼容：旧数据可能有 spaceIndices
-    var spaceIndices: [Int]?
-    
     init(id: UUID = UUID(), name: String, icon: String = "square.grid.2x2", spaceUUIDs: [String] = [], colorHex: String = "#5E9EFF", hotkeyKeyCode: UInt32? = nil, hotkeyModifiers: UInt32? = nil) {
         self.id = id
         self.name = name

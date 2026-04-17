@@ -6,11 +6,12 @@ class SidebarPanel: NSPanel {
     private var mouseMonitor: Any?
     private var clickMonitor: Any?
     private var localMouseMonitor: Any?
-    private var localClickMonitor: Any?
     private var dismissTimer: DispatchSourceTimer?
     private var isAnimating = false
     private var colorOverlayView: NSView?
     var onDismiss: (() -> Void)?
+    /// 打开设置窗口等场景下暂停自动消失。调用者负责复位。
+    var isDismissSuspended = false
     
     init() {
         super.init(
@@ -30,30 +31,39 @@ class SidebarPanel: NSPanel {
         backgroundColor = .clear
         
         // Setup visual effect view for vibrancy
+        // 默认用 .sidebar —— frosted 效果最明显、饱和度拉高。material 之后由用户设置覆盖。
         let visualEffect = NSVisualEffectView()
         visualEffect.material = .sidebar
         visualEffect.state = .active
         visualEffect.blendingMode = .behindWindow
+        visualEffect.wantsLayer = true
         
         contentView = visualEffect
     }
     
     override var canBecomeKey: Bool { true }
     
-    // MARK: - Sidebar Color
+    // MARK: - Sidebar Color / Material
     
+    func updateBlurMaterial(_ material: NSVisualEffectView.Material) {
+        guard let visualEffect = contentView as? NSVisualEffectView else { return }
+        visualEffect.material = material
+        visualEffect.state = .active
+        visualEffect.blendingMode = .behindWindow
+    }
+    
+    /// 在 vibrancy 之上叠加用户 tint（可选）
+    /// - color: tint 颜色，nil 表示不叠加
+    /// - opacity: tint 覆盖强度 0..1（直接作为 alpha 使用，不再做 0.55 倍缩放）
     func updateSidebarColor(color: NSColor?, opacity: Double) {
         guard let visualEffect = contentView as? NSVisualEffectView else { return }
         
         if let color = color {
-            // 自定义颜色模式：禁用毛玻璃，使用纯色叠加
-            visualEffect.material = .sidebar
-            visualEffect.state = .active
-            
             if colorOverlayView == nil {
                 let overlay = NSView()
                 overlay.wantsLayer = true
                 overlay.translatesAutoresizingMaskIntoConstraints = false
+                // 放在 hostingView 下面，保证 SwiftUI 内容在最上层
                 visualEffect.addSubview(overlay, positioned: .below, relativeTo: visualEffect.subviews.first)
                 NSLayoutConstraint.activate([
                     overlay.topAnchor.constraint(equalTo: visualEffect.topAnchor),
@@ -63,19 +73,20 @@ class SidebarPanel: NSPanel {
                 ])
                 colorOverlayView = overlay
             }
-            colorOverlayView?.layer?.backgroundColor = color.withAlphaComponent(CGFloat(opacity)).cgColor
+            let clamped = max(0, min(1, CGFloat(opacity)))
+            colorOverlayView?.layer?.backgroundColor = color.withAlphaComponent(clamped).cgColor
             colorOverlayView?.isHidden = false
         } else {
-            // 默认毛玻璃模式
             colorOverlayView?.isHidden = true
-            visualEffect.material = .sidebar
-            visualEffect.state = .active
         }
     }
     
     func setSwiftUIContent<Content: View>(_ content: Content) {
         let hostingView = NSHostingView(rootView: content)
         hostingView.translatesAutoresizingMaskIntoConstraints = false
+        // 关键：NSHostingView 在 macOS 14+ 偶发带系统不透明底色，显式清掉以免覆盖 vibrancy。
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
         
         guard let visualEffect = contentView as? NSVisualEffectView else { return }
         visualEffect.addSubview(hostingView)
@@ -124,15 +135,6 @@ class SidebarPanel: NSPanel {
             self?.isAnimating = false
             self?.startMouseMonitoring()
         })
-    }
-    
-    func showAtPosition(on screen: NSScreen, mousePosition: NSPoint, width: CGFloat = AppConstants.defaultSidebarWidth) {
-        showAtPosition(
-            on: screen,
-            mousePosition: mousePosition,
-            width: width,
-            height: screen.visibleFrame.height
-        )
     }
     
     func showAtPosition(
@@ -234,11 +236,6 @@ class SidebarPanel: NSPanel {
             self?.handleMouseMoved(event)
             return event
         }
-        
-        localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            // Don't dismiss on clicks inside the panel
-            return event
-        }
     }
     
     private func stopMouseMonitoring() {
@@ -254,25 +251,31 @@ class SidebarPanel: NSPanel {
             NSEvent.removeMonitor(monitor)
             localMouseMonitor = nil
         }
-        if let monitor = localClickMonitor {
-            NSEvent.removeMonitor(monitor)
-            localClickMonitor = nil
-        }
+    }
+    
+    /// 是否应该跳过自动消失：菜单 / sheet 正在显示、或上层显式暂停了（如设置窗口打开）
+    private var shouldSkipDismiss: Bool {
+        if isDismissSuspended { return true }
+        return NSApp.windows.contains(where: { $0.isVisible && $0 != self && ($0.className.contains("Menu") || $0.isSheet) })
     }
     
     private func handleMouseMoved(_ event: NSEvent) {
-        let mouseLocation = NSEvent.mouseLocation
+        if shouldSkipDismiss {
+            cancelDismissTimer()
+            return
+        }
         
+        let mouseLocation = NSEvent.mouseLocation
         if frame.contains(mouseLocation) {
-            // Mouse is inside sidebar, cancel any pending dismiss
             cancelDismissTimer()
         } else {
-            // Mouse left sidebar, start dismiss timer
             scheduleDismiss()
         }
     }
     
     private func handleClickOutside(_ event: NSEvent) {
+        if shouldSkipDismiss { return }
+        
         let mouseLocation = NSEvent.mouseLocation
         if !frame.contains(mouseLocation) {
             dismiss()
