@@ -110,7 +110,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menuBarManager.onOpenSettings = { [weak self] in
             self?.openSettings()
         }
+        menuBarManager.onOpenOnboarding = {
+            OnboardingWindowController.shared.show()
+        }
         menuBarManager.setup()
+        
+        // 首次启动 / 关键依赖缺失时自动弹出向导
+        OnboardingWindowController.shared.showIfFirstLaunch()
         
         // 监听设置变化，实时应用
         settingsStore.$triggerMode

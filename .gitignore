@@ -1,7 +1,13 @@
 # Debug logs
 .dbg/
+log/
 
 # Xcode
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 DerivedData/
+
+# Build artifacts
+build/
+*.xcarchive
+xcodebuild.log

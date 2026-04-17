@@ -6,6 +6,7 @@ class MenuBarManager {
     
     var onToggleSidebar: (() -> Void)?
     var onOpenSettings: (() -> Void)?
+    var onOpenOnboarding: (() -> Void)?
     
     func setup() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -22,6 +23,10 @@ class MenuBarManager {
         menu.addItem(toggleItem)
         
         menu.addItem(NSMenuItem.separator())
+        
+        let onboardingItem = NSMenuItem(title: "Setup Assistant…", action: #selector(openOnboarding), keyEquivalent: "")
+        onboardingItem.target = self
+        menu.addItem(onboardingItem)
         
         let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
@@ -42,6 +47,10 @@ class MenuBarManager {
     
     @objc private func openSettings() {
         onOpenSettings?()
+    }
+    
+    @objc private func openOnboarding() {
+        onOpenOnboarding?()
     }
     
     @objc private func quitApp() {

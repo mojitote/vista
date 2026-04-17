@@ -16,7 +16,10 @@ targets:
     type: application
     platform: macOS
     sources:
-      - Sources
+      - path: Sources
+      - path: Resources/yabai
+        buildPhase: resources
+        type: folder
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vista.app
@@ -25,6 +28,8 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         MACOSX_DEPLOYMENT_TARGET: "13.0"
         SWIFT_VERSION: "5.9"
+        ARCHS: arm64
+        ONLY_ACTIVE_ARCH: NO
         CODE_SIGN_IDENTITY: "Apple Development"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 2AT9YW5SWA

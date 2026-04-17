@@ -8,12 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		00DD8E573211EBC469CE3DC2 /* SidebarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0145CE19912167B792DF3D /* SidebarPanel.swift */; };
+		01EF8196D5AB5964123DBFCE /* YabaiRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36C716C3C14C8A1CAD98F85 /* YabaiRuntime.swift */; };
 		0BF23001878266FB32509F0D /* HotZoneManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6BA25F5972488735E6ABA2 /* HotZoneManager.swift */; };
 		20E65BFE93B77D47ECBD58CB /* HotKeysManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E92968F314D5498A862168 /* HotKeysManager.swift */; };
 		22F01CA80F93BF2940A376CA /* SidebarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCCCB5292E9893AF269B26E8 /* SidebarViewModel.swift */; };
 		24E585D75712610822505D47 /* HotkeyDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C783752AAFD4CD9285B6A1 /* HotkeyDisplay.swift */; };
 		3068449E0E0ED95171D3F360 /* SceneStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2AD12046C10B913F177160 /* SceneStore.swift */; };
+		3AC5967182FD4744B7D26C19 /* yabai in Resources */ = {isa = PBXBuildFile; fileRef = 133A065FB2FE1EC6C2782151 /* yabai */; };
+		3AC7CFDE01F93F4EF7EA2EDA /* OnboardingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA17F2A96FE85A5099C94168 /* OnboardingStore.swift */; };
 		3C277022329020C628E6E5CD /* YabaiModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F32BAC399EB316F8BDB7CD5 /* YabaiModels.swift */; };
+		437E2A3A4D2BA4FFED7EABD3 /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B78FF3AB6F7FBBC00C29AF91 /* OnboardingWindow.swift */; };
 		4A8A4099367540B642AE4889 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9492B78B04D1763BDCC4A0 /* Scene.swift */; };
 		53159C466953278DC43130B3 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 3CE5890DCC96F282DDBFE226 /* HotKey */; };
 		534D15115F3ADCEDA15AF812 /* WindowRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E827FB279504D2C927F96620 /* WindowRow.swift */; };
@@ -34,12 +38,14 @@
 		DB751D63F1B7E0549A574324 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D1597C29ACE97F0CA5D696 /* SettingsStore.swift */; };
 		DC0A7C19183E63682FC3BCBD /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */; };
 		DFBC9DC6C193534FCF5BF729 /* SceneEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050A366949BA50079253E2D8 /* SceneEditorView.swift */; };
+		E9801032ECCACDC2B158BB8F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C406255E0BC63A1C6F17B6B2 /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		050A366949BA50079253E2D8 /* SceneEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneEditorView.swift; sourceTree = "<group>"; };
 		0CB2F32504FB8781ADB65175 /* SceneBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneBar.swift; sourceTree = "<group>"; };
 		0E79DE8A96E989E0EFE848F3 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		133A065FB2FE1EC6C2782151 /* yabai */ = {isa = PBXFileReference; lastKnownFileType = folder; name = yabai; path = Resources/yabai; sourceTree = SOURCE_ROOT; };
 		1D9492B78B04D1763BDCC4A0 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
 		3532ABEFBB7E0FBC43A23BD0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		37C783752AAFD4CD9285B6A1 /* HotkeyDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyDisplay.swift; sourceTree = "<group>"; };
@@ -52,9 +58,13 @@
 		A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowThumbnailService.swift; sourceTree = "<group>"; };
 		AE2F688649E810248701F1AD /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		B256EBA3FEDC04DDB4DA7317 /* Vista.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vista.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B78FF3AB6F7FBBC00C29AF91 /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
 		BE643961AA77111E24BD791C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		C0A2512BFCA2DA25380D1A5D /* SpaceNameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceNameStore.swift; sourceTree = "<group>"; };
+		C36C716C3C14C8A1CAD98F85 /* YabaiRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YabaiRuntime.swift; sourceTree = "<group>"; };
+		C406255E0BC63A1C6F17B6B2 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		C6032D2A817C998D34E57E29 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		CA17F2A96FE85A5099C94168 /* OnboardingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStore.swift; sourceTree = "<group>"; };
 		CE0145CE19912167B792DF3D /* SidebarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarPanel.swift; sourceTree = "<group>"; };
 		D2D1597C29ACE97F0CA5D696 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		DCCCB5292E9893AF269B26E8 /* SidebarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarViewModel.swift; sourceTree = "<group>"; };
@@ -101,6 +111,7 @@
 			children = (
 				A44BD5ABD65AFEB233DE82A3 /* WindowThumbnailService.swift */,
 				3F32BAC399EB316F8BDB7CD5 /* YabaiModels.swift */,
+				C36C716C3C14C8A1CAD98F85 /* YabaiRuntime.swift */,
 				6727D88BA81432FF9385C87D /* YabaiService.swift */,
 			);
 			path = Services;
@@ -159,9 +170,20 @@
 		82C4A28C6B3A82D58B791C18 = {
 			isa = PBXGroup;
 			children = (
+				133A065FB2FE1EC6C2782151 /* yabai */,
 				F3F732C57AC885C07C31A940 /* Sources */,
 				7FF96698F65A098B2F03335A /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		8BF04DB568D13949ABE9B929 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				CA17F2A96FE85A5099C94168 /* OnboardingStore.swift */,
+				C406255E0BC63A1C6F17B6B2 /* OnboardingView.swift */,
+				B78FF3AB6F7FBBC00C29AF91 /* OnboardingWindow.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		9B6288A4D531AB6D64A1A308 /* MenuBar */ = {
@@ -178,6 +200,7 @@
 				572E48287714F54416EEEFCF /* HotKeys */,
 				1750AC40C9E7B7165CF0872A /* HotZone */,
 				9B6288A4D531AB6D64A1A308 /* MenuBar */,
+				8BF04DB568D13949ABE9B929 /* Onboarding */,
 				4FAB02A01C689CE7D91FF6CC /* Scenes */,
 				8058BDE8709BC8EFD9306E4D /* Settings */,
 				369BDEB0D51254AC65FEF1E4 /* Sidebar */,
@@ -217,6 +240,7 @@
 			buildConfigurationList = CA5462A3F70F1EAB712AE9DF /* Build configuration list for PBXNativeTarget "Vista" */;
 			buildPhases = (
 				E83032CB4DEFBA53FD7C0329 /* Sources */,
+				A46671C7171F239429F3BD86 /* Resources */,
 				A1BC7ECDF3DB23B19140CC87 /* Frameworks */,
 			);
 			buildRules = (
@@ -268,6 +292,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		A46671C7171F239429F3BD86 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3AC5967182FD4744B7D26C19 /* yabai in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		E83032CB4DEFBA53FD7C0329 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -282,6 +317,9 @@
 				24E585D75712610822505D47 /* HotkeyDisplay.swift in Sources */,
 				9BDDC652E6DF21B895B4C417 /* LaunchAtLoginService.swift in Sources */,
 				8B1A66BE41626BE78BE0E2DB /* MenuBarManager.swift in Sources */,
+				3AC7CFDE01F93F4EF7EA2EDA /* OnboardingStore.swift in Sources */,
+				E9801032ECCACDC2B158BB8F /* OnboardingView.swift in Sources */,
+				437E2A3A4D2BA4FFED7EABD3 /* OnboardingWindow.swift in Sources */,
 				4A8A4099367540B642AE4889 /* Scene.swift in Sources */,
 				ACE72BC78BE51ADE82C45C98 /* SceneBar.swift in Sources */,
 				DFBC9DC6C193534FCF5BF729 /* SceneEditorView.swift in Sources */,
@@ -298,6 +336,7 @@
 				534D15115F3ADCEDA15AF812 /* WindowRow.swift in Sources */,
 				92B0CB491048651158401645 /* WindowThumbnailService.swift in Sources */,
 				3C277022329020C628E6E5CD /* YabaiModels.swift in Sources */,
+				01EF8196D5AB5964123DBFCE /* YabaiRuntime.swift in Sources */,
 				D1BB3B59CA9BFC5CE3EBAE71 /* YabaiService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -371,6 +410,7 @@
 		4F4987D150A840F2BF0B683F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -384,6 +424,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 0.1.0;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vista.app;
 				PRODUCT_NAME = Vista;
 				SDKROOT = macosx;
@@ -450,6 +491,7 @@
 		8522C8FDDEB907DD45D2B4C6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -463,6 +505,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 0.1.0;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vista.app;
 				PRODUCT_NAME = Vista;
 				SDKROOT = macosx;
