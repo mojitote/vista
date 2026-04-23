@@ -253,10 +253,19 @@ class SidebarPanel: NSPanel {
         }
     }
     
-    /// 是否应该跳过自动消失：菜单 / sheet 正在显示、或上层显式暂停了（如设置窗口打开）
+    /// 是否应该跳过自动消失：菜单 / popover / sheet 正在显示、或上层显式暂停了（如设置窗口打开）
+    ///
+    /// 加入 Popover 判断后，点击 todo 行的「日期选择」/「时间段」弹层时，即便鼠标
+    /// 移出了 sidebar 本体也不会触发自动收起。
     private var shouldSkipDismiss: Bool {
         if isDismissSuspended { return true }
-        return NSApp.windows.contains(where: { $0.isVisible && $0 != self && ($0.className.contains("Menu") || $0.isSheet) })
+        return NSApp.windows.contains(where: { window in
+            guard window != self, window.isVisible else { return false }
+            let name = window.className
+            return name.contains("Menu")
+                || name.contains("Popover")
+                || window.isSheet
+        })
     }
     
     private func handleMouseMoved(_ event: NSEvent) {

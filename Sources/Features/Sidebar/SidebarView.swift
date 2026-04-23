@@ -69,6 +69,10 @@ struct SidebarView: View {
             switch presentationStore.mode {
             case .fullHeight:
                 VStack(spacing: 0) {
+                    StickyAppBar(sceneStore: sceneStore, viewModel: viewModel, onDismiss: onDismiss)
+                    if settingsStore.showTodoBar {
+                        TodoBar(store: TodoStore.shared, sceneStore: sceneStore)
+                    }
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(viewModel.filteredDisplayGroups) { group in
@@ -90,6 +94,10 @@ struct SidebarView: View {
                 }
             case .popup:
                 VStack(spacing: 0) {
+                    StickyAppBar(sceneStore: sceneStore, viewModel: viewModel, onDismiss: onDismiss)
+                    if settingsStore.showTodoBar {
+                        TodoBar(store: TodoStore.shared, sceneStore: sceneStore)
+                    }
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(viewModel.filteredDisplayGroups) { group in

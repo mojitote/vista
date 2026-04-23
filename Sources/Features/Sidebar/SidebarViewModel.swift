@@ -99,6 +99,10 @@ class SidebarViewModel: ObservableObject {
     /// 窗口自定义显示名称（运行时，windowID -> 自定义名称）
     @Published var windowNames: [Int: String] = [:]
     
+    /// sidebar 当前弹出来源的 NSScreen 对应的 yabai display index。
+    /// AppDelegate 在 show 时设置，sticky bar 点击时读取。
+    @Published var activeDisplayIndex: Int?
+    
     var sceneStore: SceneStore?
     
     /// 根据当前 Scene 过滤后的 displayGroups
@@ -502,7 +506,31 @@ class SidebarViewModel: ObservableObject {
         }
     }
     
-    private func showToast(_ message: String) {
+    // MARK: - Sticky Apps
+    
+    /// 左键 sticky bar 图标：找该 app 任意窗口聚焦；优先 sidebar 弹出来源屏；都没有就拉起 app。
+    func focusStickyApp(_ stickyApp: StickyApp) {
+        AppLauncher.focusAnyWindow(
+            stickyApp: stickyApp,
+            sourceDisplayIndex: activeDisplayIndex,
+            viewModel: self
+        )
+    }
+    
+    /// 右键「新建窗口」：在指定 display 强制新开；不指定则用 sidebar 弹出来源屏。
+    func newWindowForStickyApp(_ stickyApp: StickyApp, onDisplay overrideDisplay: Int? = nil) {
+        let target = overrideDisplay
+            ?? activeDisplayIndex
+            ?? displayGroups.first(where: { $0.hasFocus })?.index
+            ?? displayGroups.first?.index
+        guard let target else {
+            showToast("没找到目标显示器")
+            return
+        }
+        AppLauncher.openNewWindow(stickyApp: stickyApp, targetDisplayIndex: target, viewModel: self)
+    }
+    
+    func showToast(_ message: String) {
         toastMessage = message
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
             if self?.toastMessage == message {

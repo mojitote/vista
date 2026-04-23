@@ -12,6 +12,9 @@ class SceneStore: ObservableObject {
     @Published var allHotkeyKeyCode: UInt32?
     @Published var allHotkeyModifiers: UInt32?
     
+    /// All Scene 的 sticky apps（独立存储，因为 All Scene 不在 scenes 数组里）。
+    @Published var allSceneStickyApps: [StickyApp] = []
+    
     private var storeURL: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = appSupport.appendingPathComponent(AppConstants.settingsDirectoryName)
@@ -75,6 +78,81 @@ class SceneStore: ObservableObject {
         save()
     }
     
+    // MARK: - Sticky Apps
+    
+    /// 当前激活 Scene 的 sticky apps；All Scene 时返回 allSceneStickyApps。
+    var currentStickyApps: [StickyApp] {
+        if isAllActive { return allSceneStickyApps }
+        return activeScene?.stickyApps ?? []
+    }
+    
+    /// 在当前激活 Scene 的 sticky bar 末尾追加一个 app（重复 bundleID 直接忽略）。
+    func addStickyAppToCurrent(bundleID: String, displayName: String) {
+        let new = StickyApp(bundleID: bundleID, displayName: displayName)
+        if isAllActive {
+            guard !allSceneStickyApps.contains(where: { $0.bundleID == bundleID }) else { return }
+            allSceneStickyApps.append(new)
+            save()
+            return
+        }
+        guard let id = activeSceneID, let idx = scenes.firstIndex(where: { $0.id == id }) else { return }
+        guard !scenes[idx].stickyApps.contains(where: { $0.bundleID == bundleID }) else { return }
+        scenes[idx].stickyApps.append(new)
+        save()
+    }
+    
+    /// 从当前激活 Scene 的 sticky bar 中移除指定 app。
+    func removeStickyAppFromCurrent(id: UUID) {
+        if isAllActive {
+            allSceneStickyApps.removeAll(where: { $0.id == id })
+            save()
+            return
+        }
+        guard let activeID = activeSceneID, let idx = scenes.firstIndex(where: { $0.id == activeID }) else { return }
+        scenes[idx].stickyApps.removeAll(where: { $0.id == id })
+        save()
+    }
+    
+    /// 重排当前激活 Scene 的 sticky apps（用于拖拽排序）。
+    func reorderStickyAppsInCurrent(_ newOrder: [StickyApp]) {
+        if isAllActive {
+            allSceneStickyApps = newOrder
+            save()
+            return
+        }
+        guard let activeID = activeSceneID, let idx = scenes.firstIndex(where: { $0.id == activeID }) else { return }
+        scenes[idx].stickyApps = newOrder
+        save()
+    }
+    
+    /// 切换某个 sticky app 的 forceNewWindow 选项。
+    func toggleForceNewWindow(stickyAppID: UUID) {
+        mutateStickyApp(id: stickyAppID) { $0.forceNewWindow.toggle() }
+    }
+    
+    /// 设置某个 sticky app 的「新建窗口」快捷键（nil/nil 即恢复默认 ⌘N）。
+    func updateStickyAppShortcut(id: UUID, keyCode: UInt32?, modifiers: UInt32?) {
+        mutateStickyApp(id: id) {
+            $0.newWindowKeyCode = keyCode
+            $0.newWindowModifiers = modifiers
+        }
+    }
+    
+    private func mutateStickyApp(id: UUID, _ mutator: (inout StickyApp) -> Void) {
+        if isAllActive {
+            if let idx = allSceneStickyApps.firstIndex(where: { $0.id == id }) {
+                mutator(&allSceneStickyApps[idx])
+                save()
+            }
+            return
+        }
+        guard let activeID = activeSceneID,
+              let sceneIdx = scenes.firstIndex(where: { $0.id == activeID }),
+              let appIdx = scenes[sceneIdx].stickyApps.firstIndex(where: { $0.id == id }) else { return }
+        mutator(&scenes[sceneIdx].stickyApps[appIdx])
+        save()
+    }
+    
     // MARK: - Persistence
     
     func save() {
@@ -86,7 +164,8 @@ class SceneStore: ObservableObject {
                 scenes: scenes,
                 activeSceneID: activeSceneID,
                 allHotkeyKeyCode: allHotkeyKeyCode,
-                allHotkeyModifiers: allHotkeyModifiers
+                allHotkeyModifiers: allHotkeyModifiers,
+                allSceneStickyApps: allSceneStickyApps
             )
             let data = try JSONEncoder().encode(payload)
             try data.write(to: storeURL)
@@ -104,6 +183,7 @@ class SceneStore: ObservableObject {
         activeSceneID = payload.activeSceneID
         allHotkeyKeyCode = payload.allHotkeyKeyCode
         allHotkeyModifiers = payload.allHotkeyModifiers
+        allSceneStickyApps = payload.allSceneStickyApps ?? []
     }
 }
 
@@ -112,4 +192,5 @@ private struct SceneStorePayload: Codable {
     var activeSceneID: UUID?
     var allHotkeyKeyCode: UInt32?
     var allHotkeyModifiers: UInt32?
+    var allSceneStickyApps: [StickyApp]?  // optional 让旧数据无痛升级
 }

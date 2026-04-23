@@ -8,6 +8,9 @@ struct OnboardingView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
+            if store.needsRelaunch {
+                relaunchBanner
+            }
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
@@ -20,7 +23,7 @@ struct OnboardingView: View {
             Divider()
             footer
         }
-        .frame(width: 620, height: 680)
+        .frame(width: 620, height: 700)
         .overlay(alignment: .top) {
             if let toast = toastMessage {
                 Text(toast)
@@ -61,6 +64,33 @@ struct OnboardingView: View {
             }
         }
         .padding(20)
+    }
+    
+    // MARK: - Relaunch Banner
+    
+    private var relaunchBanner: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                .font(.system(size: 18))
+                .foregroundColor(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("检测到权限变化，建议重启 Vista")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("macOS 的辅助功能 / 屏幕录制权限在进程运行期间变更，部分 API 的缓存要重启后才刷新。")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            Button("立即重启") {
+                OnboardingStore.relaunchApp()
+            }
+            .controlSize(.small)
+            .keyboardShortcut(.return)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.12))
     }
     
     // MARK: - Checklist
@@ -142,16 +172,22 @@ struct OnboardingView: View {
             
             actionRow(
                 title: "授予辅助功能权限",
-                description: "点击跳转系统设置，把 Vista 与 yabai 的开关都打开。",
+                description: "点击跳转系统设置，把 Vista 与 yabai 的开关都打开。授予后请重启 Vista 生效。",
                 buttonTitle: "打开系统设置",
-                action: { YabaiRuntime.openSystemSettings(pane: .accessibility) }
+                action: {
+                    YabaiRuntime.openSystemSettings(pane: .accessibility)
+                    showToast("授权完成后，回到 Vista 点顶部横幅「立即重启」")
+                }
             )
             
             actionRow(
                 title: "授予屏幕录制权限（可选）",
-                description: "启用窗口缩略图预览。",
+                description: "启用窗口缩略图预览。授予后请重启 Vista 生效。",
                 buttonTitle: "打开系统设置",
-                action: { YabaiRuntime.openSystemSettings(pane: .screenRecording) }
+                action: {
+                    YabaiRuntime.openSystemSettings(pane: .screenRecording)
+                    showToast("授权完成后，回到 Vista 点顶部横幅「立即重启」")
+                }
             )
         }
     }
@@ -159,8 +195,9 @@ struct OnboardingView: View {
     // MARK: - Footer
     
     private var footer: some View {
-        HStack {
+        HStack(spacing: 8) {
             Button("刷新状态") { store.refresh() }
+            Button("重启 Vista") { OnboardingStore.relaunchApp() }
             Spacer()
             Text("Vista · 内置 yabai v7.1.16 (arm64)")
                 .font(.system(size: 11))

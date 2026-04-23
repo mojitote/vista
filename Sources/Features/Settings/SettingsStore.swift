@@ -64,6 +64,9 @@ class SettingsStore: ObservableObject {
     @Published var previewEnabled: Bool = true
     @Published var previewMaxWidth: CGFloat = 480
     
+    // Todo
+    @Published var showTodoBar: Bool = true
+    
     // Sidebar appearance
     @Published var sidebarColorHex: String?  // nil = 系统默认毛玻璃
     @Published var sidebarOpacity: Double = 0.4  // tint 叠加透明度（0 = 无 tint，1 = 纯色）
@@ -100,6 +103,7 @@ class SettingsStore: ObservableObject {
             "sidebarBlurMaterial": sidebarBlurMaterial.rawValue,
             "previewEnabled": previewEnabled,
             "previewMaxWidth": previewMaxWidth,
+            "showTodoBar": showTodoBar,
         ]
         if let hex = sidebarColorHex {
             settings["sidebarColorHex"] = hex
@@ -147,6 +151,7 @@ class SettingsStore: ObservableObject {
            let m = SidebarBlurMaterial(rawValue: val) { sidebarBlurMaterial = m }
         if let val = settings["previewEnabled"] as? Bool { previewEnabled = val }
         if let val = settings["previewMaxWidth"] as? CGFloat { previewMaxWidth = val }
+        if let val = settings["showTodoBar"] as? Bool { showTodoBar = val }
     }
     
     // MARK: - HotKey Helper

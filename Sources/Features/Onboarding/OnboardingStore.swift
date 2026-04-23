@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AppKit
 
 /// 向导各项检查的状态机。轮询刷新（每 1.5s），也提供手动 `refresh()`。
 final class OnboardingStore: ObservableObject {
@@ -75,13 +76,35 @@ final class OnboardingStore: ObservableObject {
             ? .init(state: .ok)
             : .init(state: .warning, message: "未加载：跨 Space 操作将受限")
         
-        accessibility = YabaiRuntime.hasAccessibilityPermission
+        let ax = YabaiRuntime.hasAccessibilityPermission
+        accessibility = ax
             ? .init(state: .ok)
             : .init(state: .failing, message: "未授予")
         
-        screenRecording = YabaiRuntime.hasScreenRecordingPermission
+        let sr = YabaiRuntime.hasScreenRecordingPermission
+        screenRecording = sr
             ? .init(state: .ok)
             : .init(state: .warning, message: "未授予：窗口缩略图不可用")
+        
+        // 权限相比启动时发生了任何变化（包括授予和撤销）都触发重启提示。
+        // 特别是授予：很多 AppKit / CG API 对权限的读取有进程级缓存，重启最稳。
+        if ax != baselineAccessibility || sr != baselineScreenRecording {
+            needsRelaunch = true
+        }
+    }
+    
+    /// 重启 Vista 自身。
+    /// 通过 `open -n` 启动一个新实例，然后退出当前进程。
+    static func relaunchApp() {
+        let bundlePath = Bundle.main.bundlePath
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", bundlePath]
+        try? task.run()
+        // 给新实例一点启动时间
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            NSApp.terminate(nil)
+        }
     }
     
     deinit {

@@ -219,6 +219,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         sidebarPanel.show(on: screen, width: settingsStore.sidebarWidth)
         applySidebarAppearance()
+        updateActiveDisplay(for: screen)
         sidebarViewModel.loadData()
         sidebarViewModel.startPolling()
     }
@@ -240,8 +241,47 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             height: height
         )
         applySidebarAppearance()
+        updateActiveDisplay(for: screen)
         sidebarViewModel.loadData()
         sidebarViewModel.startPolling()
+    }
+    
+    /// 把 NSScreen 映射到 yabai display index：
+    /// 1) 通过 NSScreen 的 NSDeviceDescription 拿到 CGDirectDisplayID。
+    /// 2) 用 CGDisplayCreateUUIDFromDisplayID 得到 UUID 字符串。
+    /// 3) 在 sidebarViewModel.displayGroups 里匹配 uuid。
+    /// 任何步骤失败时回落到 frame 匹配（NSScreen.frame ≈ yabai display.frame）。
+    private func updateActiveDisplay(for screen: NSScreen) {
+        guard !sidebarViewModel.displayGroups.isEmpty else {
+            // 数据还没载入，先记着；等 displayGroups 更新后由外部观察者补一次。
+            // 这里靠 polling 后下一帧 UI 用 fallback.first 兜底，问题不大。
+            return
+        }
+        if let uuid = screenUUIDString(for: screen),
+           let g = sidebarViewModel.displayGroups.first(where: { $0.uuid == uuid }) {
+            sidebarViewModel.activeDisplayIndex = g.index
+            return
+        }
+        // fallback：找 frame 最匹配的
+        let target = screen.frame
+        if let g = sidebarViewModel.displayGroups.min(by: { distance($0.frame, target) < distance($1.frame, target) }) {
+            sidebarViewModel.activeDisplayIndex = g.index
+        }
+    }
+    
+    private func screenUUIDString(for screen: NSScreen) -> String? {
+        guard let raw = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
+            return nil
+        }
+        let displayID = CGDirectDisplayID(raw.uint32Value)
+        guard let uuidRef = CGDisplayCreateUUIDFromDisplayID(displayID)?.takeRetainedValue() else { return nil }
+        return CFUUIDCreateString(nil, uuidRef) as String
+    }
+    
+    private func distance(_ a: YabaiFrame, _ b: NSRect) -> CGFloat {
+        let dx = a.x - b.origin.x
+        let dy = a.y - b.origin.y
+        return dx * dx + dy * dy
     }
     
     /// 切换触发模式。initial=true 时只在 `threeFingerTap` 下才启动 trackpad，

@@ -31,6 +31,10 @@ struct SettingsView: View {
                 }
             }
             
+            Section("Todo") {
+                Toggle("Show Todo Bar", isOn: $store.showTodoBar)
+            }
+            
             Section("Preview") {
                 Toggle("Enable Preview", isOn: $store.previewEnabled)
                 

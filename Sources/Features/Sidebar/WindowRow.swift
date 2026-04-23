@@ -142,6 +142,10 @@ struct WindowRow: View {
                 Label("重命名", systemImage: "pencil")
             }
             
+            Button(action: addToStickyBar) {
+                Label("加入当前 Scene 快捷栏", systemImage: "pin")
+            }
+            
             Divider()
             
             Button(role: .destructive, action: {
@@ -168,6 +172,17 @@ struct WindowRow: View {
         }
         .opacity(window.isMinimized ? 0.5 : 1.0)
         .padding(.horizontal, DesignTokens.Spacing.md)
+    }
+    
+    private func addToStickyBar() {
+        guard let app = NSRunningApplication(processIdentifier: pid_t(window.pid)),
+              let bundleID = app.bundleIdentifier else {
+            viewModel.showToast("无法获取 \(window.app) 的 bundle ID")
+            return
+        }
+        let displayName = app.localizedName ?? window.app
+        sceneStore.addStickyAppToCurrent(bundleID: bundleID, displayName: displayName)
+        viewModel.showToast("已加入快捷栏：\(displayName)")
     }
 }
 

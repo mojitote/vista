@@ -33,6 +33,16 @@ class YabaiService {
     
     // MARK: - Low-level Socket Communication
     
+    /// 给 yabai 发送任意命令，返回原始响应。仅在内部 helper 不够用时使用。
+    func sendRaw(args: [String]) throws -> Data {
+        try sendMessage(args: args)
+    }
+    
+    /// 把 send + 移动 + 显示焦点这类 action 通用化，仅供调用方查 display/space 后用。
+    func moveWindowToDisplay(windowID: Int, displayIndex: Int) throws {
+        _ = try sendMessage(args: ["window", "\(windowID)", "--display", "\(displayIndex)"])
+    }
+    
     private func sendMessage(args: [String]) throws -> Data {
         // Build message body: each arg null-terminated, plus trailing null
         var body = Data()
