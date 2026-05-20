@@ -223,19 +223,19 @@ private struct StickyAppShortcutEditor: View {
             
             Text("点击「录制」后按下你想发给该应用的组合键。\n大多数 app 用 ⌘N，部分用 ⌘⇧N（Safari 私密窗）或 ⌘⌥N。")
                 .font(.system(size: 11))
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
             
             HStack(spacing: 8) {
                 Text(isRecording ? "按下组合键…" : shortcutString)
                     .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(isRecording ? .accentColor : .primary)
+                    .foregroundColor(isRecording ? DesignTokens.Colors.activeIndicator : DesignTokens.Colors.primaryText)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .frame(minWidth: 120, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 5)
-                            .fill(Color.primary.opacity(0.06))
+                            .fill(DesignTokens.Colors.subtleBackground)
                     )
                 
                 Button(isRecording ? "取消录制" : "录制") {

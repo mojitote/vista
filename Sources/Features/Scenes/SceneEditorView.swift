@@ -11,6 +11,10 @@ struct SceneEditorView: View {
     @State private var selectedSpaceUUIDs: Set<String> = []
     @State private var availableSpaces: [(uuid: String, index: Int)] = []
     @State private var selectedColorHex: String = "#5E9EFF"
+    @State private var selectedGradientColors: [String] = []
+    @State private var selectedColorOpacity: Double = 0.5
+    @State private var selectedGradientAngle: Double = -45
+    @State private var selectedTexture: Double = 0
     @State private var hotkeyKeyCode: UInt32?
     @State private var hotkeyModifiers: UInt32?
     @State private var isRecordingHotkey = false
@@ -25,12 +29,6 @@ struct SceneEditorView: View {
         "envelope", "calendar", "folder", "globe", "wrench.and.screwdriver"
     ]
     
-    private let colorOptions: [(name: String, hex: String)] = [
-        ("蓝", "#5E9EFF"), ("绿", "#4ECDC4"), ("紫", "#9B59B6"),
-        ("橙", "#F39C12"), ("红", "#E74C3C"), ("粉", "#FD79A8"),
-        ("青", "#00CEC9"), ("黄", "#FDCB6E"), ("灰", "#95A5A6"),
-    ]
-    
     var body: some View {
         VStack(spacing: 16) {
             Text(isEditing ? "编辑场景" : "新建场景")
@@ -43,7 +41,7 @@ struct SceneEditorView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("图标")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                 
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(32)), count: 6), spacing: 8) {
                     ForEach(iconOptions, id: \.self) { iconName in
@@ -52,11 +50,11 @@ struct SceneEditorView: View {
                             .frame(width: 28, height: 28)
                             .background(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(icon == iconName ? Color.accentColor.opacity(0.2) : Color.clear)
+                                    .fill(icon == iconName ? DesignTokens.Colors.activeIndicator.opacity(0.2) : Color.clear)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .stroke(icon == iconName ? Color.accentColor : Color.clear, lineWidth: 1)
+                                    .stroke(icon == iconName ? DesignTokens.Colors.activeIndicator : Color.clear, lineWidth: 1)
                             )
                             .onTapGesture {
                                 icon = iconName
@@ -69,34 +67,27 @@ struct SceneEditorView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("主题颜色")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                 
-                LazyVGrid(columns: Array(repeating: GridItem(.fixed(32)), count: 9), spacing: 8) {
-                    ForEach(colorOptions, id: \.hex) { option in
-                        Circle()
-                            .fill(Color(nsColor: NSColor(hex: option.hex) ?? .systemBlue))
-                            .frame(width: 24, height: 24)
-                            .overlay(
-                                Circle()
-                                    .stroke(selectedColorHex == option.hex ? Color.primary : Color.clear, lineWidth: 2)
-                            )
-                            .onTapGesture {
-                                selectedColorHex = option.hex
-                            }
-                    }
-                }
+                ZenColorPickerView(
+                    colorHex: $selectedColorHex,
+                    gradientColors: $selectedGradientColors,
+                    opacity: $selectedColorOpacity,
+                    gradientAngle: $selectedGradientAngle,
+                    texture: $selectedTexture
+                )
             }
             
             // Space 选择
             VStack(alignment: .leading, spacing: 4) {
                 Text("包含的 Space")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                 
                 if availableSpaces.isEmpty {
                     Text("加载中...")
                         .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(DesignTokens.Colors.secondaryText)
                 } else {
                     LazyVGrid(columns: Array(repeating: GridItem(.fixed(60)), count: 4), spacing: 8) {
                         ForEach(availableSpaces, id: \.uuid) { space in
@@ -126,13 +117,13 @@ struct SceneEditorView: View {
                                 .frame(maxWidth: .infinity)
                                 .background(
                                     RoundedRectangle(cornerRadius: 4)
-                                        .fill(isSelected ? Color.accentColor.opacity(0.2) :
-                                              isOccupied ? Color.primary.opacity(0.02) :
-                                              Color.primary.opacity(0.05))
+                                        .fill(isSelected ? DesignTokens.Colors.activeIndicator.opacity(0.2) :
+                                              isOccupied ? DesignTokens.Colors.subtleBackground :
+                                              DesignTokens.Colors.subtleBackground)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 4)
-                                        .stroke(isSelected ? Color.accentColor :
+                                        .stroke(isSelected ? DesignTokens.Colors.activeIndicator :
                                                 isOccupied ? Color.clear : Color.clear, lineWidth: 1)
                                 )
                                 .opacity(isOccupied ? 0.5 : 1.0)
@@ -147,19 +138,19 @@ struct SceneEditorView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("快捷键")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                 
                 HStack {
                     if isRecordingHotkey {
                         Text("按下快捷键...")
                             .font(.system(size: 12))
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(DesignTokens.Colors.activeIndicator)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.accentColor, lineWidth: 1)
+                                    .stroke(DesignTokens.Colors.activeIndicator, lineWidth: 1)
                             )
                     } else if let keyCode = hotkeyKeyCode, let mods = hotkeyModifiers {
                         Text(hotkeyDisplayString(keyCode: keyCode, modifiers: mods))
@@ -169,18 +160,18 @@ struct SceneEditorView: View {
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.primary.opacity(0.05))
+                                    .fill(DesignTokens.Colors.subtleBackground)
                             )
                     } else {
                         Text("未设置")
                             .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(DesignTokens.Colors.secondaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.primary.opacity(0.05))
+                                    .fill(DesignTokens.Colors.subtleBackground)
                             )
                     }
                     
@@ -224,13 +215,16 @@ struct SceneEditorView: View {
             }
         }
         .padding(20)
-        .frame(width: 300)
+        .frame(width: 340)
         .onAppear {
             if let scene = editingScene {
                 name = scene.name
                 icon = scene.icon
                 selectedSpaceUUIDs = Set(scene.spaceUUIDs)
                 selectedColorHex = scene.colorHex
+                selectedGradientColors = scene.gradientColors
+                selectedColorOpacity = scene.colorOpacity
+                selectedGradientAngle = scene.gradientAngle
                 hotkeyKeyCode = scene.hotkeyKeyCode
                 hotkeyModifiers = scene.hotkeyModifiers
             } else if let uuid = preselectedSpaceUUID {
@@ -249,6 +243,9 @@ struct SceneEditorView: View {
             scene.icon = icon
             scene.spaceUUIDs = Array(selectedSpaceUUIDs)
             scene.colorHex = selectedColorHex
+            scene.gradientColors = selectedGradientColors
+            scene.colorOpacity = selectedColorOpacity
+            scene.gradientAngle = selectedGradientAngle
             scene.hotkeyKeyCode = hotkeyKeyCode
             scene.hotkeyModifiers = hotkeyModifiers
             sceneStore.updateScene(scene)
@@ -258,6 +255,9 @@ struct SceneEditorView: View {
                 icon: icon,
                 spaceUUIDs: Array(selectedSpaceUUIDs),
                 colorHex: selectedColorHex,
+                gradientColors: selectedGradientColors,
+                colorOpacity: selectedColorOpacity,
+                gradientAngle: selectedGradientAngle,
                 hotkeyKeyCode: hotkeyKeyCode,
                 hotkeyModifiers: hotkeyModifiers
             )

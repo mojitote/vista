@@ -118,7 +118,7 @@ struct WindowRow: View {
             } else {
                 Text("无法截取预览")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                     .padding(12)
             }
         }

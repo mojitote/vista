@@ -31,7 +31,7 @@ struct OnboardingView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .background(Color.black.opacity(0.75))
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.onDarkSurface)
                     .cornerRadius(8)
                     .padding(.top, 56)
                     .transition(.opacity)
@@ -47,19 +47,19 @@ struct OnboardingView: View {
         HStack(alignment: .center, spacing: 12) {
             Image(systemName: "sidebar.left")
                 .font(.system(size: 28, weight: .regular))
-                .foregroundColor(.accentColor)
+                .foregroundColor(DesignTokens.Colors.activeIndicator)
             VStack(alignment: .leading, spacing: 2) {
                 Text("欢迎使用 Vista")
                     .font(.system(size: 18, weight: .semibold))
                 Text("按顺序完成下面的步骤，Vista 就能接管你的 Spaces 与窗口。")
                     .font(.system(size: 12))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
             }
             Spacer()
             if store.isAllRequiredOK {
                 Label("一切就绪", systemImage: "checkmark.seal.fill")
                     .labelStyle(.titleAndIcon)
-                    .foregroundColor(.green)
+                    .foregroundColor(DesignTokens.Colors.success)
                     .font(.system(size: 12, weight: .medium))
             }
         }
@@ -72,13 +72,13 @@ struct OnboardingView: View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
                 .font(.system(size: 18))
-                .foregroundColor(.orange)
+                .foregroundColor(DesignTokens.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text("检测到权限变化，建议重启 Vista")
                     .font(.system(size: 12, weight: .semibold))
                 Text("macOS 的辅助功能 / 屏幕录制权限在进程运行期间变更，部分 API 的缓存要重启后才刷新。")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
@@ -90,7 +90,7 @@ struct OnboardingView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
-        .background(Color.orange.opacity(0.12))
+        .background(DesignTokens.Colors.warning.opacity(0.12))
     }
     
     // MARK: - Checklist
@@ -99,7 +99,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("状态检查")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.secondaryText)
             
             statusRow(
                 title: "macOS 版本",
@@ -140,7 +140,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("快捷操作")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.secondaryText)
             
             actionRow(
                 title: "第 1 步：配置 SIP（仅首次安装）",
@@ -201,7 +201,7 @@ struct OnboardingView: View {
             Spacer()
             Text("Vista · 内置 yabai v7.1.16 (arm64)")
                 .font(.system(size: 11))
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.secondaryText)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
@@ -227,7 +227,7 @@ struct OnboardingView: View {
                 }
                 Text(detail)
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
@@ -238,11 +238,11 @@ struct OnboardingView: View {
     private func statusIcon(for state: OnboardingStore.ItemStatus.State) -> some View {
         switch state {
         case .ok:
-            Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+            Image(systemName: "checkmark.circle.fill").foregroundColor(DesignTokens.Colors.success)
         case .warning:
-            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
+            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(DesignTokens.Colors.warning)
         case .failing:
-            Image(systemName: "xmark.circle.fill").foregroundColor(.red)
+            Image(systemName: "xmark.circle.fill").foregroundColor(DesignTokens.Colors.error)
         case .unknown:
             ProgressView().controlSize(.small)
         }
@@ -250,10 +250,10 @@ struct OnboardingView: View {
     
     private func colorFor(_ state: OnboardingStore.ItemStatus.State) -> Color {
         switch state {
-        case .ok: return .green
-        case .warning: return .orange
-        case .failing: return .red
-        case .unknown: return .secondary
+        case .ok: return DesignTokens.Colors.success
+        case .warning: return DesignTokens.Colors.warning
+        case .failing: return DesignTokens.Colors.error
+        case .unknown: return DesignTokens.Colors.secondaryText
         }
     }
     
@@ -265,7 +265,7 @@ struct OnboardingView: View {
                     .font(.system(size: 12, weight: .semibold))
                 Text(description)
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()

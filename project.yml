@@ -47,3 +47,21 @@ targets:
         CFBundlePackageType: APPL
         CFBundleExecutable: Vista
         NSHumanReadableCopyright: ""
+
+  vista-cmd:
+    type: tool
+    platform: macOS
+    sources:
+      - path: CLI
+      - path: Sources/Services/YabaiService.swift
+      - path: Sources/Services/YabaiModels.swift
+      - path: Sources/Services/TerminalService.swift
+      - path: Sources/Services/SimpleIntentParser.swift
+      - path: Sources/Services/VoiceCommandService.swift
+      - path: Sources/App/AppConstants.swift
+    settings:
+      base:
+        PRODUCT_NAME: vista-cmd
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        SWIFT_VERSION: "5.9"
+        ARCHS: arm64

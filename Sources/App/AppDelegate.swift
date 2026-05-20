@@ -169,8 +169,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         sceneStore.$activeSceneID
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.updatePopupLayoutIfNeeded()
-                self?.applySidebarColor()
+                guard let self = self else { return }
+                if self.presentationStore.mode == .popup && self.sidebarPanel.isVisible {
+                    self.sidebarPanel.suppressDismissTemporarily()
+                }
+                self.updatePopupLayoutIfNeeded()
+                self.applySidebarColor()
             }
             .store(in: &cancellables)
         
@@ -182,15 +186,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             .store(in: &cancellables)
         
-        // 监听毛玻璃 / tint 设置变化，即时应用
-        Publishers.CombineLatest3(
-            settingsStore.$sidebarBlurMaterial,
-            settingsStore.$sidebarColorHex,
-            settingsStore.$sidebarOpacity
+        // 监听毛玻璃 / tint / 渐变设置变化，即时应用
+        Publishers.MergeMany(
+            settingsStore.$sidebarBlurMaterial.map { _ in () }.eraseToAnyPublisher(),
+            settingsStore.$sidebarColorMode.map { _ in () }.eraseToAnyPublisher(),
+            settingsStore.$sidebarColorHex.map { _ in () }.eraseToAnyPublisher(),
+            settingsStore.$sidebarOpacity.map { _ in () }.eraseToAnyPublisher(),
+            settingsStore.$sidebarGradientColors.map { _ in () }.eraseToAnyPublisher(),
+            settingsStore.$sidebarGradientAngle.map { _ in () }.eraseToAnyPublisher(),
+            settingsStore.$sidebarGradientTexture.map { _ in () }.eraseToAnyPublisher()
         )
         .dropFirst()
         .receive(on: DispatchQueue.main)
-        .sink { [weak self] _, _, _ in
+        .sink { [weak self] _ in
             self?.applySidebarAppearance()
         }
         .store(in: &cancellables)
@@ -375,13 +383,41 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         )
     }
     
-    /// 根据激活 Scene 更新面板底色：有 Scene 用主题色，否则用用户设置的颜色
+    /// 根据激活 Scene 更新面板底色：有 Scene 用主题色，否则用用户设置的颜色/渐变
     private func applySidebarColor() {
-        if let scene = sceneStore.activeScene,
-           let color = NSColor(hex: scene.colorHex) {
-            // scene 主题色用用户设置的 opacity，保证 vibrancy 能穿透
-            sidebarPanel.updateSidebarColor(color: color, opacity: settingsStore.sidebarOpacity)
-        } else {
+        // Scene 主题色优先覆盖用户设置
+        if let scene = sceneStore.activeScene {
+            if !scene.gradientColors.isEmpty {
+                let nsColors = scene.gradientColors.compactMap { NSColor(hex: $0) }
+                if !nsColors.isEmpty {
+                    sidebarPanel.updateSidebarGradient(
+                        colors: nsColors,
+                        angle: scene.gradientAngle,
+                        opacity: scene.colorOpacity
+                    )
+                    return
+                }
+            }
+            if let color = NSColor(hex: scene.colorHex) {
+                sidebarPanel.updateSidebarColor(color: color, opacity: scene.colorOpacity)
+                return
+            }
+        }
+        
+        // Fallback to global settings
+        switch settingsStore.sidebarColorMode {
+        case .gradient:
+            let nsColors = settingsStore.sidebarGradientNSColors
+            if !nsColors.isEmpty {
+                sidebarPanel.updateSidebarGradient(
+                    colors: nsColors,
+                    angle: settingsStore.sidebarGradientAngle,
+                    opacity: settingsStore.sidebarOpacity
+                )
+            } else {
+                sidebarPanel.updateSidebarColor(color: nil, opacity: 0)
+            }
+        case .solid:
             sidebarPanel.updateSidebarColor(color: settingsStore.sidebarNSColor, opacity: settingsStore.sidebarOpacity)
         }
     }

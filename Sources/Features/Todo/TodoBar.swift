@@ -147,7 +147,7 @@ struct TodoBar: View {
             } else {
                 Text(todo.title)
                     .font(.system(size: 12))
-                    .foregroundColor(todo.done ? DesignTokens.Colors.secondaryText : .primary)
+                    .foregroundColor(todo.done ? DesignTokens.Colors.secondaryText : DesignTokens.Colors.primaryText)
                     .strikethrough(todo.done)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -236,9 +236,9 @@ struct TodoBar: View {
     
     private func chipColor(for status: TodoDueStatus) -> Color {
         switch status {
-        case .overdue: return Color.red
-        case .today:   return Color.orange
-        case .upcoming(let d) where d <= 2: return Color.blue
+        case .overdue: return DesignTokens.Colors.error
+        case .today:   return DesignTokens.Colors.warning
+        case .upcoming(let d) where d <= 2: return DesignTokens.Colors.link
         case .upcoming: return DesignTokens.Colors.secondaryText
         case .none:    return DesignTokens.Colors.secondaryText
         }
@@ -260,10 +260,10 @@ struct TodoBar: View {
             if let badge = newDateBadgeText {
                 Text(badge)
                     .font(.system(size: 10))
-                    .foregroundColor(.blue)
+                    .foregroundColor(DesignTokens.Colors.link)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(RoundedRectangle(cornerRadius: 3).fill(Color.blue.opacity(0.15)))
+                    .background(RoundedRectangle(cornerRadius: 3).fill(DesignTokens.Colors.linkBackground))
                     .onTapGesture { clearNewDates() }
             }
             

@@ -1,20 +1,13 @@
 import SwiftUI
 import Combine
-import AppKit
 
 struct SettingsView: View {
     @ObservedObject var store: SettingsStore
     @State private var useCustomColor: Bool
-    @State private var selectedColor: Color
     
     init(store: SettingsStore) {
         self.store = store
-        _useCustomColor = State(initialValue: store.sidebarColorHex != nil)
-        if let hex = store.sidebarColorHex, let nsColor = NSColor(hex: hex) {
-            _selectedColor = State(initialValue: Color(nsColor: nsColor))
-        } else {
-            _selectedColor = State(initialValue: Color(.sRGB, red: 0.15, green: 0.15, blue: 0.18))
-        }
+        _useCustomColor = State(initialValue: store.sidebarColorHex != nil || !store.sidebarGradientColors.isEmpty)
     }
     
     var body: some View {
@@ -110,37 +103,37 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 
-                Toggle("Custom Tint Color", isOn: $useCustomColor)
+                Toggle("Custom Color", isOn: $useCustomColor)
                     .onChange(of: useCustomColor) { newValue in
-                        if newValue {
-                            let nsColor = NSColor(selectedColor)
-                            store.sidebarColorHex = nsColor.hexString
-                        } else {
+                        if !newValue {
                             store.sidebarColorHex = nil
+                            store.sidebarGradientColors = []
+                            store.sidebarColorMode = .solid
                         }
                     }
                 
                 if useCustomColor {
-                    ColorPicker("Tint Color", selection: $selectedColor, supportsOpacity: false)
-                        .onChange(of: selectedColor) { newValue in
-                            let nsColor = NSColor(newValue)
-                            store.sidebarColorHex = nsColor.hexString
-                        }
-                }
-                
-                HStack {
-                    Text("Tint Opacity")
-                    Slider(value: $store.sidebarOpacity, in: 0.0...1.0, step: 0.05)
-                    Text("\(Int(store.sidebarOpacity * 100))%")
-                        .monospacedDigit()
-                        .frame(width: 40)
+                    ZenColorPickerView(
+                        colorHex: Binding(
+                            get: { store.sidebarColorHex ?? "#2C2C2E" },
+                            set: { store.sidebarColorHex = $0 }
+                        ),
+                        gradientColors: $store.sidebarGradientColors,
+                        opacity: $store.sidebarOpacity,
+                        gradientAngle: $store.sidebarGradientAngle,
+                        texture: $store.sidebarGradientTexture
+                    )
+                    .onChange(of: store.sidebarGradientColors) { newColors in
+                        store.sidebarColorMode = newColors.isEmpty ? .solid : .gradient
+                    }
                 }
             }
         }
         .formStyle(.grouped)
-        .frame(width: 400, height: 600)
+        .frame(width: 400, height: 650)
         .onReceive(store.objectWillChange.debounce(for: .milliseconds(500), scheduler: RunLoop.main)) { _ in
             store.save()
         }
     }
+    
 }

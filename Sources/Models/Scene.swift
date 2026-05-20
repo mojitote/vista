@@ -52,6 +52,9 @@ struct VistaScene: Codable, Identifiable {
     var icon: String  // SF Symbol 名称
     var spaceUUIDs: [String]  // 绑定的 Space UUID 列表（稳定标识，不受位置变化影响）
     var colorHex: String  // 主题颜色（hex，如 "#FF6B6B"）
+    var gradientColors: [String]  // 渐变色 hex 数组（空 = 单色模式）
+    var colorOpacity: Double  // 颜色叠加透明度
+    var gradientAngle: Double  // 渐变角度（度）
     
     // 快捷键（Carbon key code + modifier flags）
     var hotkeyKeyCode: UInt32?
@@ -60,12 +63,15 @@ struct VistaScene: Codable, Identifiable {
     /// 这个 Scene 顶上 sticky bar 里的应用列表。
     var stickyApps: [StickyApp]
     
-    init(id: UUID = UUID(), name: String, icon: String = "square.grid.2x2", spaceUUIDs: [String] = [], colorHex: String = "#5E9EFF", hotkeyKeyCode: UInt32? = nil, hotkeyModifiers: UInt32? = nil, stickyApps: [StickyApp] = []) {
+    init(id: UUID = UUID(), name: String, icon: String = "square.grid.2x2", spaceUUIDs: [String] = [], colorHex: String = "#5E9EFF", gradientColors: [String] = [], colorOpacity: Double = 0.5, gradientAngle: Double = -45, hotkeyKeyCode: UInt32? = nil, hotkeyModifiers: UInt32? = nil, stickyApps: [StickyApp] = []) {
         self.id = id
         self.name = name
         self.icon = icon
         self.spaceUUIDs = spaceUUIDs
         self.colorHex = colorHex
+        self.gradientColors = gradientColors
+        self.colorOpacity = colorOpacity
+        self.gradientAngle = gradientAngle
         self.hotkeyKeyCode = hotkeyKeyCode
         self.hotkeyModifiers = hotkeyModifiers
         self.stickyApps = stickyApps
@@ -73,7 +79,7 @@ struct VistaScene: Codable, Identifiable {
     
     // Codable: 旧数据没有 stickyApps 字段时回落到空数组
     enum CodingKeys: String, CodingKey {
-        case id, name, icon, spaceUUIDs, colorHex, hotkeyKeyCode, hotkeyModifiers, stickyApps
+        case id, name, icon, spaceUUIDs, colorHex, gradientColors, colorOpacity, gradientAngle, hotkeyKeyCode, hotkeyModifiers, stickyApps
     }
     
     init(from decoder: Decoder) throws {
@@ -83,6 +89,9 @@ struct VistaScene: Codable, Identifiable {
         self.icon = try c.decodeIfPresent(String.self, forKey: .icon) ?? "square.grid.2x2"
         self.spaceUUIDs = try c.decodeIfPresent([String].self, forKey: .spaceUUIDs) ?? []
         self.colorHex = try c.decodeIfPresent(String.self, forKey: .colorHex) ?? "#5E9EFF"
+        self.gradientColors = try c.decodeIfPresent([String].self, forKey: .gradientColors) ?? []
+        self.colorOpacity = try c.decodeIfPresent(Double.self, forKey: .colorOpacity) ?? 0.5
+        self.gradientAngle = try c.decodeIfPresent(Double.self, forKey: .gradientAngle) ?? -45
         self.hotkeyKeyCode = try c.decodeIfPresent(UInt32.self, forKey: .hotkeyKeyCode)
         self.hotkeyModifiers = try c.decodeIfPresent(UInt32.self, forKey: .hotkeyModifiers)
         self.stickyApps = try c.decodeIfPresent([StickyApp].self, forKey: .stickyApps) ?? []

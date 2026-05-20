@@ -18,6 +18,19 @@ enum SceneDisplayFallback: String {
     case firstNonFullscreen  // 切到第一个非全屏 space
 }
 
+/// 侧边栏颜色模式：纯色 tint 或渐变 — 参考 Zen Browser 的 workspace gradient 系统
+enum SidebarColorMode: String, CaseIterable {
+    case solid    = "solid"     // 单色 tint 叠加（原有行为）
+    case gradient = "gradient"  // 多色渐变叠加
+    
+    var displayName: String {
+        switch self {
+        case .solid:    return "Solid"
+        case .gradient: return "Gradient"
+        }
+    }
+}
+
 /// 侧边栏毛玻璃强度。NSVisualEffectView 不支持直接调 blur 半径，
 /// 通过切换 material 在苹果预设档位间选：各 material 的 blur 半径、tint、饱和度都不同。
 enum SidebarBlurMaterial: String, CaseIterable {
@@ -68,9 +81,15 @@ class SettingsStore: ObservableObject {
     @Published var showTodoBar: Bool = true
     
     // Sidebar appearance
+    @Published var sidebarColorMode: SidebarColorMode = .solid
     @Published var sidebarColorHex: String?  // nil = 系统默认毛玻璃
     @Published var sidebarOpacity: Double = 0.4  // tint 叠加透明度（0 = 无 tint，1 = 纯色）
     @Published var sidebarBlurMaterial: SidebarBlurMaterial = .regular
+    
+    // Gradient settings (参考 Zen: gradientColors + opacity + texture)
+    @Published var sidebarGradientColors: [String] = []  // hex 颜色数组，空 = 无渐变
+    @Published var sidebarGradientAngle: Double = -45     // 渐变角度（度）
+    @Published var sidebarGradientTexture: Double = 0     // 噪波纹理强度 0~1
     
     // Hot key stored as key code + modifiers
     @Published var sidebarHotKeyCode: UInt32?
@@ -99,8 +118,12 @@ class SettingsStore: ObservableObject {
             "sceneDisplayFallback": sceneDisplayFallback.rawValue,
             "triggerMode": triggerMode.rawValue,
             "doubleTapDelay": doubleTapDelay,
+            "sidebarColorMode": sidebarColorMode.rawValue,
             "sidebarOpacity": sidebarOpacity,
             "sidebarBlurMaterial": sidebarBlurMaterial.rawValue,
+            "sidebarGradientColors": sidebarGradientColors,
+            "sidebarGradientAngle": sidebarGradientAngle,
+            "sidebarGradientTexture": sidebarGradientTexture,
             "previewEnabled": previewEnabled,
             "previewMaxWidth": previewMaxWidth,
             "showTodoBar": showTodoBar,
@@ -146,9 +169,14 @@ class SettingsStore: ObservableObject {
            let mode = SidebarTriggerMode(rawValue: val) { triggerMode = mode }
         if let val = settings["doubleTapDelay"] as? TimeInterval { doubleTapDelay = val }
         if let val = settings["sidebarColorHex"] as? String { sidebarColorHex = val }
+        if let val = settings["sidebarColorMode"] as? String,
+           let mode = SidebarColorMode(rawValue: val) { sidebarColorMode = mode }
         if let val = settings["sidebarOpacity"] as? Double { sidebarOpacity = val }
         if let val = settings["sidebarBlurMaterial"] as? String,
            let m = SidebarBlurMaterial(rawValue: val) { sidebarBlurMaterial = m }
+        if let val = settings["sidebarGradientColors"] as? [String] { sidebarGradientColors = val }
+        if let val = settings["sidebarGradientAngle"] as? Double { sidebarGradientAngle = val }
+        if let val = settings["sidebarGradientTexture"] as? Double { sidebarGradientTexture = val }
         if let val = settings["previewEnabled"] as? Bool { previewEnabled = val }
         if let val = settings["previewMaxWidth"] as? CGFloat { previewMaxWidth = val }
         if let val = settings["showTodoBar"] as? Bool { showTodoBar = val }
@@ -166,6 +194,11 @@ class SettingsStore: ObservableObject {
     var sidebarNSColor: NSColor? {
         guard let hex = sidebarColorHex else { return nil }
         return NSColor(hex: hex)
+    }
+    
+    /// 渐变的 NSColor 数组（解析 hex 字符串）
+    var sidebarGradientNSColors: [NSColor] {
+        sidebarGradientColors.compactMap { NSColor(hex: $0) }
     }
 }
 

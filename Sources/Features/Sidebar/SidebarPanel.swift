@@ -7,11 +7,16 @@ class SidebarPanel: NSPanel {
     private var clickMonitor: Any?
     private var localMouseMonitor: Any?
     private var dismissTimer: DispatchSourceTimer?
+    private var suppressTimer: DispatchSourceTimer?
     private var isAnimating = false
     private var colorOverlayView: NSView?
     var onDismiss: (() -> Void)?
     /// 打开设置窗口等场景下暂停自动消失。调用者负责复位。
-    var isDismissSuspended = false
+    var isDismissSuspended = false {
+        didSet {
+            if isDismissSuspended { cancelDismissTimer() }
+        }
+    }
     
     init() {
         super.init(
@@ -59,26 +64,117 @@ class SidebarPanel: NSPanel {
         guard let visualEffect = contentView as? NSVisualEffectView else { return }
         
         if let color = color {
-            if colorOverlayView == nil {
-                let overlay = NSView()
-                overlay.wantsLayer = true
-                overlay.translatesAutoresizingMaskIntoConstraints = false
-                // 放在 hostingView 下面，保证 SwiftUI 内容在最上层
-                visualEffect.addSubview(overlay, positioned: .below, relativeTo: visualEffect.subviews.first)
-                NSLayoutConstraint.activate([
-                    overlay.topAnchor.constraint(equalTo: visualEffect.topAnchor),
-                    overlay.bottomAnchor.constraint(equalTo: visualEffect.bottomAnchor),
-                    overlay.leadingAnchor.constraint(equalTo: visualEffect.leadingAnchor),
-                    overlay.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor),
-                ])
-                colorOverlayView = overlay
-            }
+            let overlay = ensureOverlayView(in: visualEffect)
+            overlay.layer?.sublayers?.removeAll(where: { $0 is CAGradientLayer })
             let clamped = max(0, min(1, CGFloat(opacity)))
-            colorOverlayView?.layer?.backgroundColor = color.withAlphaComponent(clamped).cgColor
-            colorOverlayView?.isHidden = false
+            overlay.layer?.backgroundColor = color.withAlphaComponent(clamped).cgColor
+            overlay.isHidden = false
         } else {
             colorOverlayView?.isHidden = true
         }
+    }
+    
+    /// 在 vibrancy 之上叠加渐变覆盖层（Zen 风格多层渐变系统）
+    /// - 1 色：纯色覆盖
+    /// - 2 色：双向线性渐变叠加（Zen: 两个反向 linear-gradient）
+    /// - 3 色：线性 + 两个径向渐变叠加（Zen: linear-gradient + 2x radial-gradient）
+    func updateSidebarGradient(colors: [NSColor], angle: Double, opacity: Double) {
+        guard let visualEffect = contentView as? NSVisualEffectView else { return }
+        
+        guard !colors.isEmpty else {
+            colorOverlayView?.isHidden = true
+            return
+        }
+        
+        let overlay = ensureOverlayView(in: visualEffect)
+        overlay.layer?.backgroundColor = NSColor.clear.cgColor
+        overlay.layer?.sublayers?.forEach { $0.removeFromSuperlayer() }
+        
+        let clamped = max(0, min(1, CGFloat(opacity)))
+        
+        if colors.count == 1 {
+            overlay.layer?.backgroundColor = colors[0].withAlphaComponent(clamped).cgColor
+        } else if colors.count == 2 {
+            // Zen: linear-gradient(-45deg, color[1] 0%, transparent 100%),
+            //      linear-gradient(135deg, color[0] 0%, transparent 100%)
+            let rotation = angle
+            
+            let layer1 = CAGradientLayer()
+            layer1.frame = overlay.bounds
+            layer1.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+            layer1.colors = [colors[0].withAlphaComponent(clamped).cgColor, NSColor.clear.cgColor]
+            let rad1 = (rotation + 180 + 90) * .pi / 180.0
+            layer1.startPoint = CGPoint(x: 0.5 - cos(rad1) * 0.5, y: 0.5 + sin(rad1) * 0.5)
+            layer1.endPoint   = CGPoint(x: 0.5 + cos(rad1) * 0.5, y: 0.5 - sin(rad1) * 0.5)
+            overlay.layer?.addSublayer(layer1)
+            
+            let layer2 = CAGradientLayer()
+            layer2.frame = overlay.bounds
+            layer2.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+            layer2.colors = [colors[1].withAlphaComponent(clamped).cgColor, NSColor.clear.cgColor]
+            let rad2 = (rotation + 90) * .pi / 180.0
+            layer2.startPoint = CGPoint(x: 0.5 - cos(rad2) * 0.5, y: 0.5 + sin(rad2) * 0.5)
+            layer2.endPoint   = CGPoint(x: 0.5 + cos(rad2) * 0.5, y: 0.5 - sin(rad2) * 0.5)
+            overlay.layer?.addSublayer(layer2)
+        } else if colors.count >= 3 {
+            // Zen CSS:
+            //   linear-gradient(-5deg, color3 10%, transparent 80%),
+            //   radial-gradient(circle at 95% 0%, color2 0%, transparent 75%),
+            //   radial-gradient(circle at 0% 0%, color1 10%, transparent 70%)
+            // 渲染顺序：底→顶
+            
+            // 底层: radial at top-left (color1)
+            let radial1 = RadialGradientLayer()
+            radial1.frame = overlay.bounds
+            radial1.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+            radial1.gradientColor = colors[0].withAlphaComponent(clamped)
+            radial1.centerRatio = CGPoint(x: 0.0, y: 0.0)  // top-left (Core Graphics: y=0 is bottom)
+            radial1.radiusRatio = 0.7
+            radial1.innerStop = 0.1
+            radial1.setNeedsDisplay()
+            overlay.layer?.addSublayer(radial1)
+            
+            // 中层: radial at top-right (color2)
+            let radial2 = RadialGradientLayer()
+            radial2.frame = overlay.bounds
+            radial2.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+            radial2.gradientColor = colors[1].withAlphaComponent(clamped)
+            radial2.centerRatio = CGPoint(x: 0.95, y: 0.0)  // top-right
+            radial2.radiusRatio = 0.75
+            radial2.innerStop = 0.0
+            radial2.setNeedsDisplay()
+            overlay.layer?.addSublayer(radial2)
+            
+            // 顶层: linear gradient (color3)
+            let linearLayer = CAGradientLayer()
+            linearLayer.frame = overlay.bounds
+            linearLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+            linearLayer.colors = [colors[2].withAlphaComponent(clamped).cgColor, NSColor.clear.cgColor]
+            linearLayer.locations = [0.1, 0.8]
+            let rad = (-5.0 + 90) * .pi / 180.0
+            linearLayer.startPoint = CGPoint(x: 0.5 - cos(rad) * 0.5, y: 0.5 + sin(rad) * 0.5)
+            linearLayer.endPoint   = CGPoint(x: 0.5 + cos(rad) * 0.5, y: 0.5 - sin(rad) * 0.5)
+            overlay.layer?.addSublayer(linearLayer)
+        }
+        
+        overlay.isHidden = false
+    }
+    
+    private func ensureOverlayView(in visualEffect: NSVisualEffectView) -> GradientOverlayView {
+        if let existing = colorOverlayView as? GradientOverlayView { return existing }
+        let overlay = GradientOverlayView()
+        overlay.wantsLayer = true
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        // 放在 hostingView 下面，保证 SwiftUI 内容在最上层
+        visualEffect.addSubview(overlay, positioned: .below, relativeTo: visualEffect.subviews.first)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: visualEffect.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: visualEffect.bottomAnchor),
+            overlay.leadingAnchor.constraint(equalTo: visualEffect.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor),
+        ])
+        colorOverlayView = overlay
+        return overlay
     }
     
     func setSwiftUIContent<Content: View>(_ content: Content) {
@@ -265,6 +361,7 @@ class SidebarPanel: NSPanel {
             return name.contains("Menu")
                 || name.contains("Popover")
                 || window.isSheet
+                || (window is NSPanel && window.styleMask.contains(.utilityWindow))
         })
     }
     
@@ -321,8 +418,109 @@ class SidebarPanel: NSPanel {
         return NSRect(x: x, y: y, width: clampedWidth, height: clampedHeight)
     }
     
+    /// 临时暂停自动消失（用于 Scene 切换等导致面板缩放的场景）
+    func suppressDismissTemporarily(for duration: TimeInterval = 0.6) {
+        isDismissSuspended = true
+        cancelDismissTimer()
+
+        suppressTimer?.cancel()
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(deadline: .now() + duration)
+        timer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            self.isDismissSuspended = false
+            self.suppressTimer = nil
+        }
+        timer.resume()
+        suppressTimer = timer
+    }
+
     deinit {
         stopMouseMonitoring()
         cancelDismissTimer()
+        suppressTimer?.cancel()
+    }
+}
+
+// MARK: - Gradient Overlay View (子图层随 layout 自适应)
+
+/// 确保子 CALayer（特别是 RadialGradientLayer）在 overlay view resize 时同步更新 frame
+private class GradientOverlayView: NSView {
+    override func layout() {
+        super.layout()
+        // 同步所有子图层的 frame 到当前 bounds
+        layer?.sublayers?.forEach { sublayer in
+            sublayer.frame = bounds
+        }
+    }
+}
+
+// MARK: - Custom Core Graphics Radial Gradient Layer (无伪影)
+
+/// 使用 Core Graphics 手动绘制径向渐变，避免 CAGradientLayer.radial 的边缘伪影
+private class RadialGradientLayer: CALayer {
+    var gradientColor: NSColor = .white
+    /// 圆心位置（0~1 比例，相对于 bounds）。注意 CALayer 坐标系 y=0 在底部
+    var centerRatio: CGPoint = CGPoint(x: 0.5, y: 0.5)
+    /// 半径占对角线长度的比例
+    var radiusRatio: CGFloat = 0.7
+    /// 内圈起始不透明位置（0~1），innerStop 以内为纯色
+    var innerStop: CGFloat = 0.0
+    
+    override init() {
+        super.init()
+        needsDisplayOnBoundsChange = true  // bounds 变化时自动重绘
+        contentsScale = NSScreen.main?.backingScaleFactor ?? 2.0
+    }
+    
+    override init(layer: Any) {
+        super.init(layer: layer)
+        if let other = layer as? RadialGradientLayer {
+            gradientColor = other.gradientColor
+            centerRatio = other.centerRatio
+            radiusRatio = other.radiusRatio
+            innerStop = other.innerStop
+        }
+        needsDisplayOnBoundsChange = true
+        contentsScale = NSScreen.main?.backingScaleFactor ?? 2.0
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        needsDisplayOnBoundsChange = true
+    }
+    
+    override func draw(in ctx: CGContext) {
+        let w = bounds.width
+        let h = bounds.height
+        guard w > 0 && h > 0 else { return }
+        
+        // CALayer 坐标系：y=0 在底部。CSS 的 "0% 0%" 是左上角
+        // 所以 CSS "circle at 0% 0%" (左上) → CG centerRatio (0, 1)
+        // CSS "circle at 95% 0%" (右上) → CG centerRatio (0.95, 1)
+        let center = CGPoint(x: w * centerRatio.x, y: h * (1.0 - centerRatio.y))
+        let diagonal = sqrt(w * w + h * h)
+        let radius = diagonal * radiusRatio
+        
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else { return }
+        
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        gradientColor.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
+        
+        let components: [CGFloat] = [
+            r, g, b, a,     // inner color (full)
+            r, g, b, a,     // inner stop position
+            r, g, b, 0.0,   // outer (transparent)
+        ]
+        let locations: [CGFloat] = [0.0, innerStop, 1.0]
+        
+        guard let gradient = CGGradient(colorSpace: colorSpace, colorComponents: components, locations: locations, count: 3) else { return }
+        
+        ctx.drawRadialGradient(
+            gradient,
+            startCenter: center, startRadius: 0,
+            endCenter: center, endRadius: radius,
+            options: [.drawsAfterEndLocation]
+        )
     }
 }

@@ -32,7 +32,7 @@ struct SidebarView: View {
             if let toast = viewModel.toastMessage {
                 Text(toast)
                     .font(.system(size: 11))
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.onDarkSurface)
                     .padding(.horizontal, DesignTokens.Spacing.lg)
                     .padding(.vertical, DesignTokens.Spacing.sm)
                     .background(
